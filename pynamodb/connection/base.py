@@ -368,7 +368,7 @@ class Connection(object):
 
     def _make_api_call(self, operation_name: str, operation_kwargs: Dict) -> Dict:
         try:
-            return (self.get_client())._make_api_call(operation_name, operation_kwargs)
+            return self.get_client()._make_api_call(operation_name, operation_kwargs)
         except ClientError as e:
             resp_metadata = e.response.get('ResponseMetadata', {}).get('HTTPHeaders', {})
             cancellation_reasons = e.response.get('CancellationReasons', [])

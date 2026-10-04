@@ -26,6 +26,8 @@ FILES: List[Tuple[str, str]] = [
     ("pynamodb/asyncio/connection/__init__.py", "pynamodb/connection/__init__.py"),
     ("pynamodb/asyncio/connection/base.py", "pynamodb/connection/base.py"),
     ("pynamodb/asyncio/connection/table.py", "pynamodb/connection/table.py"),
+    ("pynamodb/asyncio/models.py", "pynamodb/models.py"),
+    ("pynamodb/asyncio/indexes.py", "pynamodb/indexes.py"),
     ("tests/asyncio/test_base_connection.py", "tests/sync_generated/test_base_connection.py"),
     ("tests/asyncio/test_table_connection.py", "tests/sync_generated/test_table_connection.py"),
     ("tests/asyncio/test_signals.py", "tests/sync_generated/test_signals.py"),
@@ -43,6 +45,7 @@ RULES: List[Tuple["re.Pattern[str]", str]] = [
         (r"\basync def\b", "def"),
         (r"\basync with\b", "with"),
         (r"\basync for\b", "for"),
+        (r"\(await (\w[\w.]*\([^()]*\))\)", r"\1"),  # (await f()).x -> f().x
         (r"\bawait ", ""),
         (r"\b__aenter__\b", "__enter__"),
         (r"\b__aexit__\b", "__exit__"),
@@ -59,6 +62,7 @@ RULES: List[Tuple["re.Pattern[str]", str]] = [
         (r"\bIsolatedAsyncioTestCase\b", "TestCase"),
         (r"\bAsyncMock\b", "MagicMock"),
         (r"\banext\(", "next("),
+        (r"\b_compat\.alist\(", "list("),
     ]
 ]
 

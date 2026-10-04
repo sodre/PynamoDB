@@ -7,7 +7,7 @@ the only module under pynamodb/asyncio/ allowed to import asyncio.
 import asyncio
 import time
 import weakref
-from typing import Any, Dict, Hashable
+from typing import Any, AsyncIterable, Dict, Hashable, List, TypeVar
 
 from aiobotocore.config import AioConfig
 
@@ -25,6 +25,14 @@ class _AsyncTime:
 
 
 TIME_MODULE: Any = _AsyncTime()
+
+
+_T = TypeVar('_T')
+
+
+async def alist(iterable: AsyncIterable[_T]) -> List[_T]:
+    """Collects an async iterable; the generator rewrites `await alist(x)` to `list(x)`."""
+    return [item async for item in iterable]
 
 
 async def sleep(seconds: float) -> None:

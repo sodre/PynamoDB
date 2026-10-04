@@ -77,3 +77,18 @@ def test_sync_connections_does_not_import_asyncio_package():
         "import sys, pynamodb\nwith pynamodb.connections(): pass\nassert 'aiobotocore' not in sys.modules"],
         capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+def test_sync_model_close():
+    from pynamodb.models import Model
+    from pynamodb.attributes import UnicodeAttribute
+
+    class Thing(Model):
+        class Meta:
+            table_name = 'things'
+            region = 'us-east-1'
+        id = UnicodeAttribute(hash_key=True)
+
+    Thing._get_connection().connection.get_client()
+    Thing.close()
+    assert Thing._connection is None

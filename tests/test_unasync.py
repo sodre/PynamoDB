@@ -40,6 +40,8 @@ HEADER = "# AUTO-GENERATED from pynamodb/asyncio/x.py by scripts/unasync.py - DO
     ("class T(IsolatedAsyncioTestCase):\n", "class T(TestCase):\n"),
     ("m = AsyncMock()\n", "m = MagicMock()\n"),
     ("    page = await anext(self.page_iter)\n", "    page = next(self.page_iter)\n"),
+    ("    await _compat.alist(it)\n", "    list(it)\n"),
+    ("    return (await cls.describe_table()).get(X)\n", "    return cls.describe_table().get(X)\n"),
 ])
 def test_rules(src, expected):
     assert t(src) == HEADER + expected
