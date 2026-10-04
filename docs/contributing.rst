@@ -14,7 +14,7 @@ virtualenvs, but a minimal example is shown below.
 .. code-block:: bash
 
   $ virtualenv -p python3 venv && source venv/bin/activate
-  $ pip install -e .[signals] -r requirements-dev.txt
+  $ pip install -e .[signals,asyncio] -r requirements-dev.txt
 
 
 A java runtime is required to run the integration tests. After installing java, download and untar the
@@ -44,6 +44,27 @@ There are also a set of integration tests that require a local dynamodb server t
 
   $ java -Djava.library.path=/tmp/DynamoDBLocal_lib -jar /tmp/DynamoDBLocal.jar -inMemory -port 8000
   $ pytest tests/      # in another window
+
+
+Async Source and Generated Sync Code
+------------------------------------
+
+The async API under ``pynamodb/asyncio/`` is the source of truth. The sync modules
+(``pynamodb/models.py``, ``pynamodb/connection/``, ``pynamodb/indexes.py``,
+``pynamodb/pagination.py``, ``pynamodb/transactions.py``) and the tests in ``tests/sync_generated/``
+are generated from it by ``scripts/unasync.py``. The full list is the ``FILES`` table in that script.
+
+- Edit ``pynamodb/asyncio/`` and ``tests/asyncio/``. Never edit a generated file; each one starts
+  with ``# AUTO-GENERATED ... DO NOT EDIT``.
+- After a change, regenerate with ``python scripts/unasync.py``. CI runs
+  ``python scripts/unasync.py --check`` and fails if any generated file is stale.
+- Behaviour that cannot be rewritten textually goes in the hand-written pair
+  ``pynamodb/_compat.py`` (sync) and ``pynamodb/asyncio/_compat.py`` (async).
+- The generator aborts on ``asyncio.gather``, ``asyncio.create_task`` and ``asyncio.wait_for``,
+  and on ``import asyncio`` in library source. Use ``_compat`` instead.
+- Async tests need Python 3.10+ and ``pip install -e .[signals,asyncio] -r requirements-dev.txt``.
+- The original ``tests/test_*.py`` and ``tests/integration/*.py`` are the frozen compatibility suite
+  for the sync API. Do not edit them for async work.
 
 
 Backwards Compatibility

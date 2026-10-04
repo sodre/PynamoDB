@@ -3,6 +3,21 @@
 Release Notes
 =============
 
+Unreleased
+----------
+
+Features:
+
+* Add an async API, ``pynamodb.asyncio``, built on aiobotocore. Install with
+  ``pip install pynamodb[asyncio]`` (Python 3.10+). See :doc:`asyncio`.
+* Add ``Model.close()``, ``Connection.close()``, ``Connection.get_client()`` and the
+  ``pynamodb.connections()`` context manager for closing clients explicitly.
+
+Other:
+
+* The sync modules ``models``, ``indexes``, ``pagination``, ``transactions`` and
+  ``connection`` are now generated from the async source by ``scripts/unasync.py``.
+
 v6.1.1
 ------
 

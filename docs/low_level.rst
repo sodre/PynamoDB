@@ -120,3 +120,22 @@ Deleting an item has similar syntax:
 
     conn.delete_item('table_name', 'hash_key', 'range_key')
 
+Async connections
+^^^^^^^^^^^^^^^^^
+
+The async low level API mirrors the sync one. Methods are awaited, and the connection
+should be closed when you are done with it (see :doc:`asyncio`):
+
+.. code-block:: python
+
+    from pynamodb.asyncio.connection import Connection
+
+    conn = Connection(region='us-west-1')
+
+.. code-block:: python
+
+    item = await conn.get_item('table_name', 'hash_key', 'range_key')
+
+.. code-block:: python
+
+    await conn.close()

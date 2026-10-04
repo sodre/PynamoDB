@@ -26,6 +26,7 @@ Topics
    :maxdepth: 2
 
    quickstart
+   asyncio
    tutorial
    indexes
    batch

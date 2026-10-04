@@ -25,6 +25,25 @@ Low Level API
 .. automodule:: pynamodb.connection
     :members: Connection, TableConnection
 
+Async API
+---------
+
+.. automodule:: pynamodb.asyncio.models
+    :members: Model
+    :noindex:
+
+.. automodule:: pynamodb.asyncio.connection
+    :members: Connection, TableConnection
+
+.. automodule:: pynamodb.asyncio.transactions
+    :members: TransactGet, TransactWrite
+
+.. automodule:: pynamodb.asyncio.pagination
+    :members: ResultIterator, PageIterator, RateLimiter
+
+.. automodule:: pynamodb.asyncio
+    :members: connections
+
 Exceptions
 ----------
 

@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx_issues',
+    'sphinx_tabs.tabs',
 ]
 
 # Directive for sphinx_issues
