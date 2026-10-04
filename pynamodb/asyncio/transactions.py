@@ -1,11 +1,10 @@
-# AUTO-GENERATED from pynamodb/asyncio/transactions.py by scripts/unasync.py - DO NOT EDIT
 from typing import Tuple, TypeVar, Type, Any, List, Optional, Dict, Union, Text, Generic
 
-from pynamodb.connection import Connection
+from pynamodb.asyncio.connection import Connection
 from pynamodb.constants import ITEM, RESPONSES
 from pynamodb.expressions.condition import Condition
 from pynamodb.expressions.update import Action
-from pynamodb.models import Model, _ModelFuture, _KeyType
+from pynamodb.asyncio.models import Model, _ModelFuture, _KeyType
 
 _M = TypeVar('_M', bound=Model)
 _TTransaction = TypeVar('_TTransaction', bound='Transaction')
@@ -21,15 +20,15 @@ class Transaction:
         self._connection = connection
         self._return_consumed_capacity = return_consumed_capacity
 
-    def _commit(self):
+    async def _commit(self):
         raise NotImplementedError()
 
-    def __enter__(self: _TTransaction) -> _TTransaction:
+    async def __aenter__(self: _TTransaction) -> _TTransaction:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
-            self._commit()
+            await self._commit()
 
 
 class TransactGet(Transaction):
@@ -62,8 +61,8 @@ class TransactGet(Transaction):
         for model, data in zip(futures, results):
             model.update_with_raw_data(data.get(ITEM))
 
-    def _commit(self) -> Any:
-        response = self._connection.transact_get_items(
+    async def _commit(self) -> Any:
+        response = await self._connection.transact_get_items(
             get_items=self._get_items,
             return_consumed_capacity=self._return_consumed_capacity
         )
@@ -129,8 +128,8 @@ class TransactWrite(Transaction):
         self._update_items.append(operation_kwargs)
         self._models_for_version_attribute_update.append(model)
 
-    def _commit(self) -> Any:
-        response = self._connection.transact_write_items(
+    async def _commit(self) -> Any:
+        response = await self._connection.transact_write_items(
             condition_check_items=self._condition_check_items,
             delete_items=self._delete_items,
             put_items=self._put_items,

@@ -28,11 +28,13 @@ FILES: List[Tuple[str, str]] = [
     ("pynamodb/asyncio/connection/table.py", "pynamodb/connection/table.py"),
     ("pynamodb/asyncio/models.py", "pynamodb/models.py"),
     ("pynamodb/asyncio/indexes.py", "pynamodb/indexes.py"),
+    ("pynamodb/asyncio/transactions.py", "pynamodb/transactions.py"),
     ("tests/asyncio/test_base_connection.py", "tests/sync_generated/test_base_connection.py"),
     ("tests/asyncio/test_table_connection.py", "tests/sync_generated/test_table_connection.py"),
     ("tests/asyncio/test_signals.py", "tests/sync_generated/test_signals.py"),
     ("tests/asyncio/test_pagination.py", "tests/sync_generated/test_pagination.py"),
     ("tests/asyncio/test_model.py", "tests/sync_generated/test_model.py"),
+    ("tests/asyncio/test_transaction.py", "tests/sync_generated/test_transaction.py"),
 ]
 
 HEADER = "# AUTO-GENERATED from {source} by scripts/unasync.py - DO NOT EDIT\n"
