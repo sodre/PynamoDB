@@ -67,8 +67,16 @@ class _Entry:
 
 
 # event loop -> {Connection._client_key() -> shared client}. Weak on the loop,
-# so entries for finished loops go away with the loop.
+# but a client that has made a request holds an aiohttp session, which holds
+# the loop, so a finished loop's entry would keep itself alive. open_client
+# therefore prunes entries for closed loops (see _prune_closed_loops).
 _clients: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, Dict[Hashable, _Entry]]" = weakref.WeakKeyDictionary()
+
+
+def _prune_closed_loops() -> None:
+    """Drops cache entries of closed loops; their clients cannot be closed any more."""
+    for loop in [loop for loop in list(_clients.keys()) if loop.is_closed()]:
+        _clients.pop(loop, None)
 
 
 def _held_loop(connection: Any) -> Any:
@@ -101,6 +109,7 @@ async def open_client(connection: Any, config: Any) -> Any:
     held = _held_entry(connection, loop)
     if held is not None:
         return held.client
+    _prune_closed_loops()
     per_loop = _clients.setdefault(loop, {})
     key = connection._client_key()
     entry = per_loop.get(key)

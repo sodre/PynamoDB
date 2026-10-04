@@ -1,9 +1,12 @@
 import asyncio
 import gc
+import json
 import weakref
 from unittest.mock import patch
 
 import pytest
+
+from aiobotocore.awsrequest import AioAWSResponse
 
 import pynamodb.asyncio
 from pynamodb.asyncio import _compat
@@ -68,18 +71,40 @@ async def test_connections_context_closes_everything():
     assert not _compat._clients.get(asyncio.get_running_loop())
 
 
+def _ok_response():
+    response = AioAWSResponse(url='', status_code=200, headers={}, raw='')
+    response._content = json.dumps({'TableNames': []}).encode('utf-8')
+    return response
+
+
+async def _send_with_real_session(self, request):
+    # Open the real aiohttp session (as AIOHTTPSession.send does) so the client
+    # ends up holding its loop, then answer without touching the network.
+    await self._get_session(None)
+    return _ok_response()
+
+
+@pytest.mark.filterwarnings('ignore::ResourceWarning')
 def test_finished_loop_is_dropped_from_cache_without_close():
-    conn = Connection(region='us-east-1')
     loops = []
 
-    async def use():
+    async def use_without_close():
         loops.append(weakref.ref(asyncio.get_running_loop()))
-        await conn.get_client()
+        conn = Connection(region='us-east-1')
+        await conn.list_tables()  # a real request: the aiohttp session now exists
+        assert (await conn.get_client())._endpoint.http_session._sessions
 
-    asyncio.run(use())
+    async def open_on_new_loop():
+        conn = Connection(region='us-east-1')
+        await conn.get_client()  # opening a client prunes closed loops
+        await conn.close()
+
+    with patch('aiobotocore.httpsession.AIOHTTPSession.send', _send_with_real_session):
+        asyncio.run(use_without_close())
+    asyncio.run(open_on_new_loop())
     gc.collect()
     assert loops[0]() is None
-    assert len(_compat._clients) == 0
+    assert not [per_loop for per_loop in _compat._clients.values() if per_loop]
 
 
 async def test_concurrent_first_use_shares_one_client_and_closes_extras():
