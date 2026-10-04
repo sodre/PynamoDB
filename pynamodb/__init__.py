@@ -9,7 +9,10 @@ __author__ = 'Jharrod LaFon'
 __license__ = 'MIT'
 __version__ = '6.1.0'
 
-from typing import ContextManager
+from typing import TYPE_CHECKING as _TYPE_CHECKING
+
+if _TYPE_CHECKING:
+    from typing import ContextManager
 
 
 def connections() -> 'ContextManager[None]':
