@@ -123,26 +123,27 @@ async def open_client(connection: Any, config: Any) -> Any:
         held = _held_entry(connection, loop)
         existing = per_loop.get(key)
         if held is not None:
-            winner = held
-        elif existing is not None and _has_credentials(existing.client):
-            winner = existing
-        else:
-            winner = None
-        if winner is not None:
             await client.__aexit__(None, None, None)
-            if winner is held:
-                return winner.client
-            entry = winner
-        else:
-            # extra_headers is part of the key, so every holder sends the same headers.
-            client.meta.events.register_first('before-send.*.*', _make_header_hook(connection._extra_headers))
-            entry = _Entry(client)
-            per_loop[key] = entry
-    assert entry is not None
+            return held.client
+        if existing is not None and _has_credentials(existing.client):
+            # Take the reference before suspending to close the extra client;
+            # otherwise the last other holder could release (and close) the
+            # existing one meanwhile, leaving this connection on a closed client.
+            _hold(connection, existing, loop)
+            await client.__aexit__(None, None, None)
+            return existing.client
+        # extra_headers is part of the key, so every holder sends the same headers.
+        client.meta.events.register_first('before-send.*.*', _make_header_hook(connection._extra_headers))
+        entry = _Entry(client)
+        per_loop[key] = entry
+    _hold(connection, entry, loop)
+    return entry.client
+
+
+def _hold(connection: Any, entry: _Entry, loop: Any) -> None:
     entry.refs += 1
     connection._client_entry = entry
     connection._client_loop = weakref.ref(loop)
-    return entry.client
 
 
 async def _release(connection: Any) -> None:

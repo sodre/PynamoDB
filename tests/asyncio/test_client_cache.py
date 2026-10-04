@@ -153,3 +153,52 @@ async def test_concurrent_first_use_shares_one_client_and_closes_extras():
         if cls is not None and getattr(cls, '_counting', False):
             cls.__aexit__ = cls._orig_exit
             del cls._counting, cls._orig_exit
+
+
+async def test_last_holder_closing_while_extra_client_closes_keeps_shared_open():
+    from aiobotocore.client import AioBaseClient
+    from aiobotocore.session import ClientCreatorContext
+
+    orig_enter = ClientCreatorContext.__aenter__
+    orig_exit = AioBaseClient.__aexit__
+    a_creating, b_opened = asyncio.Event(), asyncio.Event()
+    extra_closing, b_closed = asyncio.Event(), asyncio.Event()
+    extra, exited = [], []
+
+    async def enter(self):
+        if not extra and not a_creating.is_set():
+            # a's client: finish only after b has opened and cached its own.
+            a_creating.set()
+            await b_opened.wait()
+            client = await orig_enter(self)
+            extra.append(client)
+            return client
+        return await orig_enter(self)
+
+    async def gated_exit(self, *args):
+        if extra and self is extra[0]:
+            extra_closing.set()
+            await b_closed.wait()  # b, the last other holder, closes meanwhile
+        exited.append(self)
+        return await orig_exit(self, *args)
+
+    a, b = Connection(region='us-east-1'), Connection(region='us-east-1')
+    with patch.object(ClientCreatorContext, '__aenter__', enter), \
+            patch.object(AioBaseClient, '__aexit__', gated_exit):
+        task = asyncio.ensure_future(a.get_client())
+        await a_creating.wait()
+        shared = await b.get_client()
+        b_opened.set()
+        await extra_closing.wait()
+        await b.close()
+        b_closed.set()
+        got = await task
+        try:
+            assert got is shared
+            assert extra[0] in exited and shared not in exited  # shared client still open
+            cached = _compat._clients[asyncio.get_running_loop()][a._client_key()]
+            assert cached.client is shared and cached is a._client_entry and cached.refs == 1
+            assert await a.get_client() is shared
+        finally:
+            await a.close()
+        assert shared in exited
