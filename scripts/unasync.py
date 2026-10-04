@@ -32,6 +32,7 @@ FILES: List[Tuple[str, str]] = [
     ("tests/asyncio/test_table_connection.py", "tests/sync_generated/test_table_connection.py"),
     ("tests/asyncio/test_signals.py", "tests/sync_generated/test_signals.py"),
     ("tests/asyncio/test_pagination.py", "tests/sync_generated/test_pagination.py"),
+    ("tests/asyncio/test_model.py", "tests/sync_generated/test_model.py"),
 ]
 
 HEADER = "# AUTO-GENERATED from {source} by scripts/unasync.py - DO NOT EDIT\n"
