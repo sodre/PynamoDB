@@ -5,8 +5,9 @@ import sys
 import logging
 import uuid
 import weakref
+from contextlib import asynccontextmanager
 from threading import local
-from typing import Any, Dict, Hashable, List, Mapping, Optional, Sequence, Union, cast
+from typing import Any, AsyncIterator, Dict, Hashable, List, Mapping, Optional, Sequence, Union, cast
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -1294,3 +1295,15 @@ class Connection(object):
     @staticmethod
     def _reverse_dict(d):
         return {v: k for k, v in d.items()}
+
+
+@asynccontextmanager
+async def connections() -> AsyncIterator[None]:
+    """
+    Closes every connection that opened a client, when the block exits
+    """
+    try:
+        yield
+    finally:
+        for connection in list(_open_connections):
+            await connection.close()

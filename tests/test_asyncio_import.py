@@ -60,3 +60,20 @@ def test_sync_connection_close():
     conn.close()
     assert conn._client is None
     assert conn.client is not client
+
+
+def test_sync_connections_context_closes_clients():
+    import pynamodb
+    from pynamodb.connection import Connection
+    with pynamodb.connections():
+        conn = Connection(region='us-east-1')
+        conn.get_client()
+    assert conn._client is None
+
+
+def test_sync_connections_does_not_import_asyncio_package():
+    import subprocess, sys
+    r = subprocess.run([sys.executable, "-c",
+        "import sys, pynamodb\nwith pynamodb.connections(): pass\nassert 'aiobotocore' not in sys.modules"],
+        capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr

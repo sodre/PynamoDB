@@ -6,7 +6,12 @@ the only module under pynamodb/asyncio/ allowed to import asyncio.
 """
 import asyncio
 import time
-from typing import Any
+import weakref
+from typing import Any, Dict, Hashable
+
+from aiobotocore.config import AioConfig
+
+from pynamodb.constants import SERVICE_NAME
 
 
 class _AsyncTime:
@@ -26,11 +31,6 @@ async def sleep(seconds: float) -> None:
     await asyncio.sleep(seconds)
 
 
-from aiobotocore.config import AioConfig  # noqa: E402
-
-from pynamodb.constants import SERVICE_NAME  # noqa: E402
-
-
 def _has_credentials(client: Any) -> bool:
     signer = client._request_signer
     return not (signer and not signer._credentials)
@@ -48,25 +48,62 @@ def client_usable(connection: Any) -> bool:
     return getattr(connection, '_client_loop', None) is loop
 
 
+class _Entry:
+    __slots__ = ('client', 'refs')
+
+    def __init__(self, client: Any) -> None:
+        self.client = client
+        self.refs = 0
+
+
+# event loop -> {Connection._client_key() -> shared client}. Weak on the loop,
+# so entries for finished loops go away with the loop.
+_clients: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, Dict[Hashable, _Entry]]" = weakref.WeakKeyDictionary()
+
+
 async def open_client(connection: Any, config: Any) -> Any:
-    client = await connection.session.create_client(
-        SERVICE_NAME, connection.region, endpoint_url=connection.host, config=AioConfig().merge(config),
-    ).__aenter__()
-    client.meta.events.register_first('before-send.*.*', connection._before_send)
-    connection._client_loop = asyncio.get_running_loop()
-    return client
+    loop = asyncio.get_running_loop()
+    per_loop = _clients.setdefault(loop, {})
+    key = connection._client_key()
+    entry = per_loop.get(key)
+    if entry is None or not _has_credentials(entry.client):
+        # A poisoned entry is replaced in the cache; connections still holding
+        # it release it when they notice (client_usable) or close.
+        client = await connection.session.create_client(
+            SERVICE_NAME, connection.region, endpoint_url=connection.host, config=AioConfig().merge(config),
+        ).__aenter__()
+        # extra_headers is part of the key, so every holder sends the same headers.
+        client.meta.events.register_first('before-send.*.*', connection._before_send)
+        entry = _Entry(client)
+        per_loop[key] = entry
+    entry.refs += 1
+    connection._client_entry = entry
+    connection._client_loop = loop
+    return entry.client
 
 
 async def _release(connection: Any) -> None:
-    client = connection._client
+    entry = getattr(connection, '_client_entry', None)
     loop = getattr(connection, '_client_loop', None)
+    connection._client_entry = None
     connection._client_loop = None
+    connection._client = None
+    if entry is None:
+        return
+    entry.refs -= 1
+    if entry.refs > 0:
+        return
+    per_loop = _clients.get(loop) if loop is not None else None
+    if per_loop is not None:
+        for key, value in list(per_loop.items()):
+            if value is entry:
+                del per_loop[key]
     try:
         running = asyncio.get_running_loop()
     except RuntimeError:
         running = None
-    if client is not None and running is not None and running is loop:
-        await client.__aexit__(None, None, None)
+    if running is not None and running is loop:
+        await entry.client.__aexit__(None, None, None)
     # Otherwise the owning loop is gone or different; its sockets cannot be
     # closed from here, so the client is dropped.
 

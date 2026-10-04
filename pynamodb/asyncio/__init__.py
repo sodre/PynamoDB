@@ -14,3 +14,7 @@ except ImportError as e:
     raise ImportError(
         "pynamodb.asyncio requires aiobotocore; install pynamodb[asyncio] (Python 3.10+)"
     ) from e
+
+from pynamodb.asyncio.connection.base import connections  # noqa: E402
+
+__all__ = ['connections']
