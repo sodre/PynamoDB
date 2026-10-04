@@ -1,0 +1,52 @@
+import subprocess
+import sys
+
+import pytest
+
+
+def _run(code):
+    return subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+
+
+def test_sync_import_does_not_import_aiobotocore():
+    r = _run(
+        "import sys, pynamodb, pynamodb.models, pynamodb.connection;"
+        "assert 'aiobotocore' not in sys.modules, sorted(m for m in sys.modules if 'aio' in m);"
+        "assert 'pynamodb.asyncio' not in sys.modules"
+    )
+    assert r.returncode == 0, r.stderr
+
+
+def test_asyncio_import_error_names_extra():
+    # Simulate a missing aiobotocore by blocking the import.
+    r = _run(
+        "import sys; sys.modules['aiobotocore'] = None\n"
+        "try:\n"
+        "    import pynamodb.asyncio\n"
+        "except ImportError as e:\n"
+        "    assert 'pynamodb[asyncio]' in str(e), str(e)\n"
+        "    assert '3.10' in str(e), str(e)\n"
+        "else:\n"
+        "    raise SystemExit('expected ImportError')\n"
+    )
+    assert r.returncode == 0, r.stderr + r.stdout
+
+
+def test_sync_compat_sleep(monkeypatch):
+    from pynamodb import _compat
+    import time
+    calls = []
+    monkeypatch.setattr(time, "sleep", calls.append)
+    _compat.sleep(2)
+    assert calls == [2]
+    assert _compat.TIME_MODULE is time
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="async requires Python 3.10+")
+def test_async_compat_time_module():
+    import asyncio
+    pytest.importorskip("aiobotocore")
+    from pynamodb.asyncio import _compat
+    assert isinstance(_compat.TIME_MODULE.time(), float)
+    asyncio.run(_compat.TIME_MODULE.sleep(0))
+    asyncio.run(_compat.sleep(0))

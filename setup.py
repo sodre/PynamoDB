@@ -39,6 +39,7 @@ setup(
     ],
     extras_require={
         'signals': ['blinker>=1.3,<2.0'],
+        'asyncio': ['aiobotocore>=2.13.0; python_version>="3.10"'],
     },
     package_data={'pynamodb': ['py.typed']},
 )
