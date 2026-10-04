@@ -35,3 +35,11 @@ def test_new_event_loop_gets_new_client():
     c2 = asyncio.run(conn.get_client())
     assert c1 is not c2
     asyncio.run(conn.close())
+
+
+async def test_repr_does_not_raise_before_open():
+    conn = Connection(region='us-east-1')
+    assert 'us-east-1' in repr(conn)
+    await conn.get_client()
+    assert 'dynamodb.us-east-1.amazonaws.com' in repr(conn)
+    await conn.close()

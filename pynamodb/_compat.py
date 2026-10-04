@@ -46,3 +46,7 @@ def close_client(connection: Any) -> None:
 
 def client_property(connection: Any) -> Any:
     return connection._get_client()
+
+
+def connection_repr(connection: Any) -> str:
+    return "Connection<{}>".format(connection.client.meta.endpoint_url)

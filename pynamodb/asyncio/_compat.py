@@ -86,3 +86,10 @@ def client_property(connection: Any) -> Any:
             "(any awaited operation opens it)"
         )
     return connection._client
+
+
+def connection_repr(connection: Any) -> str:
+    # repr must never raise, so it cannot go through the (not yet open) client.
+    if connection._client is not None:
+        return "Connection<{}>".format(connection._client.meta.endpoint_url)
+    return "Connection<{}>".format(connection.host or connection.region)

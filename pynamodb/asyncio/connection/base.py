@@ -321,7 +321,7 @@ class Connection(object):
         self._aws_session_token = aws_session_token
 
     def __repr__(self) -> str:
-        return "Connection<{}>".format(self.client.meta.endpoint_url)
+        return _compat.connection_repr(self)
 
     async def dispatch(self, operation_name: str, operation_kwargs: Dict) -> Dict:
         """

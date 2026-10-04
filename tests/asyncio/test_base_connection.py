@@ -94,8 +94,8 @@ async def test_connection__subsequent_client_is_not_cached_when_credentials_none
 
         assert session_mock.create_client.call_count == 2
         for call in session_mock.create_client.call_args_list:
-            assert call.args == ('dynamodb', None)
-            assert call.kwargs['endpoint_url'] is None
+            assert call[0] == ('dynamodb', None)
+            assert call[1]['endpoint_url'] is None
     finally:
         session_patch.stop()
 
@@ -124,8 +124,8 @@ async def test_connection__client_is_passed_region_when_set():
 
         assert session_mock.create_client.call_count == 1
         call = session_mock.create_client.call_args
-        assert call.args == ('dynamodb', REGION)
-        assert call.kwargs['endpoint_url'] is None
+        assert call[0] == ('dynamodb', REGION)
+        assert call[1]['endpoint_url'] is None
     finally:
         session_patch.stop()
     await conn.close()
@@ -1668,7 +1668,7 @@ async def test_connection_client_retry_configuration(
             endpoint_url=unit_under_test.host,
             config=mock.ANY,
         )
-        config = session_mock.create_client.call_args.kwargs['config']
+        config = session_mock.create_client.call_args[1]['config']
         assert config.parameter_validation is False
         assert config.connect_timeout == unit_under_test._connect_timeout_seconds
         assert config.read_timeout == unit_under_test._read_timeout_seconds
