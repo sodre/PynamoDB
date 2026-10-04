@@ -76,6 +76,9 @@ RULES: List[Tuple["re.Pattern[str]", str]] = [
         (r"\bAioAWSResponse\b", "AWSResponse"),
         (r"\bIsolatedAsyncioTestCase\b", "TestCase"),
         (r"\bAsyncMock\b", "MagicMock"),
+        # MagicMock has no await assertions; the sync twin checks the call instead.
+        (r"\.assert_awaited_once_with\(", ".assert_called_once_with("),
+        (r"\.assert_awaited_once\(", ".assert_called_once("),
         (r"\banext\(", "next("),
         (r"\b_compat\.alist\(", "list("),
     ]

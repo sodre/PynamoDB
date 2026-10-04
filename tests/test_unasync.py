@@ -39,6 +39,8 @@ HEADER = "# AUTO-GENERATED from pynamodb/asyncio/x.py by scripts/unasync.py - DO
     ("from tests.asyncio.test_model import X\n", "from tests.sync_generated.test_model import X\n"),
     ("class T(IsolatedAsyncioTestCase):\n", "class T(TestCase):\n"),
     ("m = AsyncMock()\n", "m = MagicMock()\n"),
+    ("    m.assert_awaited_once_with(1, x=2)\n", "    m.assert_called_once_with(1, x=2)\n"),
+    ("    m.assert_awaited_once()\n", "    m.assert_called_once()\n"),
     ("    page = await anext(self.page_iter)\n", "    page = next(self.page_iter)\n"),
     ("    await _compat.alist(it)\n", "    list(it)\n"),
     ("    x = len(await f())\n", "    x = len(f())\n"),

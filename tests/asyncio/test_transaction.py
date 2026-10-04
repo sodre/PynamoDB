@@ -67,7 +67,7 @@ class TestTransactGet:
         async with TransactGet(connection=connection) as t:
             t.get(MockModel, 1, 2)
 
-        mock_connection_transact_get.assert_called_once_with(
+        mock_connection_transact_get.assert_awaited_once_with(
             get_items=[{'Key': {'mock_hash': {'N': '1'}, 'mock_range': {'N': '2'}}, 'TableName': 'mock'}],
             return_consumed_capacity=None
         )
@@ -116,7 +116,7 @@ class TestTransactWrite:
             'ExpressionAttributeNames': {'#0': 'mock_version', '#1': 'mock_toot'},
             'ExpressionAttributeValues': {':0': {'S': 'hello'}, ':1': {'N': '1'}}
         }]
-        mock_connection_transact_write.assert_called_once_with(
+        mock_connection_transact_write.assert_awaited_once_with(
             condition_check_items=expected_condition_checks,
             delete_items=expected_deletes,
             put_items=expected_puts,
