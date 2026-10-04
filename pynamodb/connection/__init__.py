@@ -1,3 +1,4 @@
+# AUTO-GENERATED from pynamodb/asyncio/connection/__init__.py by scripts/unasync.py - DO NOT EDIT
 """
 PynamoDB lowest level connection
 """

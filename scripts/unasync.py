@@ -23,6 +23,12 @@ ROOT = Path(__file__).resolve().parent.parent
 # are converted; files not listed here (e.g. async-only tests) are not generated.
 FILES: List[Tuple[str, str]] = [
     ("pynamodb/asyncio/pagination.py", "pynamodb/pagination.py"),
+    ("pynamodb/asyncio/connection/__init__.py", "pynamodb/connection/__init__.py"),
+    ("pynamodb/asyncio/connection/base.py", "pynamodb/connection/base.py"),
+    ("pynamodb/asyncio/connection/table.py", "pynamodb/connection/table.py"),
+    ("tests/asyncio/test_base_connection.py", "tests/sync_generated/test_base_connection.py"),
+    ("tests/asyncio/test_table_connection.py", "tests/sync_generated/test_table_connection.py"),
+    ("tests/asyncio/test_signals.py", "tests/sync_generated/test_signals.py"),
     ("tests/asyncio/test_pagination.py", "tests/sync_generated/test_pagination.py"),
 ]
 
@@ -47,6 +53,9 @@ RULES: List[Tuple["re.Pattern[str]", str]] = [
         (r"\bAsyncIterable\b", "Iterable"),
         (r"\basynccontextmanager\b", "contextmanager"),
         (r"\baiobotocore\.session\b", "botocore.session"),
+        (r"\baiobotocore\.httpsession\.AIOHTTPSession\b", "botocore.httpsession.URLLib3Session"),
+        (r"\baiobotocore\.awsrequest\b", "botocore.awsrequest"),
+        (r"\bAioAWSResponse\b", "AWSResponse"),
         (r"\bIsolatedAsyncioTestCase\b", "TestCase"),
         (r"\bAsyncMock\b", "MagicMock"),
         (r"\banext\(", "next("),

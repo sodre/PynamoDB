@@ -15,3 +15,34 @@ TIME_MODULE: Any = time
 
 def sleep(seconds: float) -> None:
     time.sleep(seconds)
+
+
+from pynamodb.constants import SERVICE_NAME  # noqa: E402
+
+
+def client_usable(connection: Any) -> bool:
+    # botocore caches empty credentials (see Connection._get_client); such a
+    # client must be replaced.
+    client = connection._client
+    return bool(client) and not (client._request_signer and not client._request_signer._credentials)
+
+
+def open_client(connection: Any, config: Any) -> Any:
+    client = connection.session.create_client(SERVICE_NAME, connection.region, endpoint_url=connection.host, config=config)
+    client.meta.events.register_first('before-send.*.*', connection._before_send)
+    return client
+
+
+def replace_client(connection: Any) -> None:
+    # Other threads may still be mid-request on the old client; just drop it.
+    pass
+
+
+def close_client(connection: Any) -> None:
+    close = getattr(connection._client, 'close', None)  # absent on old botocore
+    if close is not None:
+        close()
+
+
+def client_property(connection: Any) -> Any:
+    return connection._get_client()

@@ -50,3 +50,13 @@ def test_async_compat_time_module():
     assert isinstance(_compat.TIME_MODULE.time(), float)
     asyncio.run(_compat.TIME_MODULE.sleep(0))
     asyncio.run(_compat.sleep(0))
+
+
+def test_sync_connection_close():
+    from pynamodb.connection import Connection
+    conn = Connection(region='us-east-1')
+    client = conn.client
+    assert conn.get_client() is client
+    conn.close()
+    assert conn._client is None
+    assert conn.client is not client

@@ -30,6 +30,8 @@ HEADER = "# AUTO-GENERATED from pynamodb/asyncio/x.py by scripts/unasync.py - DO
     ("from typing import AsyncIterable\n", "from typing import Iterable\n"),
     ("from contextlib import asynccontextmanager\n", "from contextlib import contextmanager\n"),
     ("from aiobotocore.session import get_session\n", "from botocore.session import get_session\n"),
+    ("P = 'aiobotocore.httpsession.AIOHTTPSession.send'\n", "P = 'botocore.httpsession.URLLib3Session.send'\n"),
+    ("from aiobotocore.awsrequest import AioAWSResponse\n", "from botocore.awsrequest import AWSResponse\n"),
     ("from pynamodb.asyncio.models import Model\n", "from pynamodb.models import Model\n"),
     ("from pynamodb.asyncio import _compat\n", "from pynamodb import _compat\n"),
     ("P = 'pynamodb.asyncio.connection.Connection._make_api_call'\n",
