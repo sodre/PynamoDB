@@ -17,6 +17,9 @@ Other:
 
 * The sync modules ``models``, ``indexes``, ``pagination``, ``transactions`` and
   ``connection`` are now generated from the async source by ``scripts/unasync.py``.
+* ``Connection._make_api_call`` now gets its client from ``Connection.get_client()``. Code
+  that overrides or mocks the ``client`` property to intercept API calls should mock
+  ``get_client()`` or ``_make_api_call`` instead.
 
 v6.1.1
 ------

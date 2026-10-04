@@ -123,6 +123,8 @@ Transactions. Operations are only collected inside the block and sent when it ex
         future = transaction.get(User, "grace@example.com")
     grace = future.get()
 
+    await connection.close()
+
 See :doc:`transaction` for what each transaction operation does.
 
 Closing clients
@@ -152,8 +154,8 @@ Shared clients
 
 Async clients are shared. Models with identical settings on the same event loop use one
 client. The settings that count are region, host, credentials, timeouts, retry configuration,
-``max_pool_connections`` and ``extra_headers``; a model that differs in any of them gets its
-own client.
+``max_retry_attempts``, ``max_pool_connections`` and ``extra_headers``; a model that differs in
+any of them gets its own client.
 
 Sharing is reference counted: the client is closed when the last model or connection using it
 closes. The sync API keeps one client per model.
@@ -163,8 +165,10 @@ Event loops
 
 An async client belongs to the event loop that created it. If your program runs a second
 event loop (for example, a second call to :py:func:`asyncio.run`), models get a new client on
-the new loop, and entries for finished loops are dropped. Prefer one long-lived event loop
-for the whole program.
+the new loop. Clients left open on a loop that has since closed cannot be closed cleanly any
+more; they are dropped the next time a client is opened. So close your clients (see
+`Closing clients`_) before the loop ends, and prefer one long-lived event loop for the whole
+program.
 
 Low-level connections
 ---------------------
