@@ -21,7 +21,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # (async source, generated sync target), relative to ROOT. Extended as modules
 # are converted; files not listed here (e.g. async-only tests) are not generated.
-FILES: List[Tuple[str, str]] = []
+FILES: List[Tuple[str, str]] = [
+    ("pynamodb/asyncio/pagination.py", "pynamodb/pagination.py"),
+    ("tests/asyncio/test_pagination.py", "tests/sync_generated/test_pagination.py"),
+]
 
 HEADER = "# AUTO-GENERATED from {source} by scripts/unasync.py - DO NOT EDIT\n"
 

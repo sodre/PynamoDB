@@ -1,6 +1,5 @@
-# AUTO-GENERATED from pynamodb/asyncio/pagination.py by scripts/unasync.py - DO NOT EDIT
-from pynamodb import _compat
-from typing import Any, Callable, Dict, Iterable, Iterator, Optional, TypeVar
+from pynamodb.asyncio import _compat
+from typing import Any, Callable, Dict, Iterable, AsyncIterator, Optional, TypeVar
 
 from pynamodb.constants import (CAMEL_COUNT, ITEMS, LAST_EVALUATED_KEY, SCANNED_COUNT,
                                 CONSUMED_CAPACITY, TOTAL, CAPACITY_UNITS)
@@ -47,14 +46,14 @@ class RateLimiter:
         """
         self._consumed += units
 
-    def acquire(self) -> None:
+    async def acquire(self) -> None:
         """
         Sleeps the appropriate amount of time to follow the rate limit restriction
 
         :return: None
         """
 
-        self._time_module.sleep(max(0, self._consumed/float(self.rate_limit) - (self._time_module.time()-self._time_of_last_acquire)))
+        await self._time_module.sleep(max(0, self._consumed/float(self.rate_limit) - (self._time_module.time()-self._time_of_last_acquire)))
         self._consumed = 0
         self._time_of_last_acquire = self._time_module.time()
 
@@ -72,7 +71,7 @@ class RateLimiter:
         self._rate_limit = rate_limit
 
 
-class PageIterator(Iterator[_T]):
+class PageIterator(AsyncIterator[_T]):
     """
     PageIterator handles Query and Scan result pagination.
 
@@ -96,19 +95,19 @@ class PageIterator(Iterator[_T]):
         if rate_limit:
             self._rate_limiter = RateLimiter(rate_limit)
 
-    def __iter__(self) -> Iterator[_T]:
+    def __aiter__(self) -> AsyncIterator[_T]:
         return self
 
-    def __next__(self) -> _T:
+    async def __anext__(self) -> _T:
         if self._is_last_page:
-            raise StopIteration()
+            raise StopAsyncIteration()
 
         self._kwargs['exclusive_start_key'] = self._last_evaluated_key
 
         if self._rate_limiter:
-            self._rate_limiter.acquire()
+            await self._rate_limiter.acquire()
             self._kwargs['return_consumed_capacity'] = TOTAL
-        page = self._operation(*self._args, **self._kwargs)
+        page = await self._operation(*self._args, **self._kwargs)
         self._last_evaluated_key = page.get(LAST_EVALUATED_KEY)
         self._is_last_page = self._last_evaluated_key is None
         self._total_scanned_count += page[SCANNED_COUNT]
@@ -119,8 +118,8 @@ class PageIterator(Iterator[_T]):
 
         return page
 
-    def next(self) -> _T:
-        return self.__next__()
+    async def next(self) -> _T:
+        return await self.__anext__()
 
     @property
     def key_names(self) -> Iterable[str]:
@@ -149,7 +148,7 @@ class PageIterator(Iterator[_T]):
         return self._total_scanned_count
 
 
-class ResultIterator(Iterator[_T]):
+class ResultIterator(AsyncIterator[_T]):
     """
     ResultIterator handles Query and Scan item pagination.
 
@@ -172,22 +171,22 @@ class ResultIterator(Iterator[_T]):
         self._index = 0
         self._count = 0
 
-    def _get_next_page(self) -> None:
-        page = next(self.page_iter)
+    async def _get_next_page(self) -> None:
+        page = await anext(self.page_iter)
         self._count = page[CAMEL_COUNT]
         self._items = page.get(ITEMS)  # not returned if 'Select' is set to 'COUNT'
         self._index = 0 if self._items else self._count
         self._total_count += self._count
 
-    def __iter__(self) -> Iterator[_T]:
+    def __aiter__(self) -> AsyncIterator[_T]:
         return self
 
-    def __next__(self) -> _T:
+    async def __anext__(self) -> _T:
         if self._limit == 0:
-            raise StopIteration
+            raise StopAsyncIteration
 
         while self._index == self._count:
-            self._get_next_page()
+            await self._get_next_page()
 
         item = self._items[self._index]
         self._index += 1
@@ -197,8 +196,8 @@ class ResultIterator(Iterator[_T]):
             item = self._map_fn(item)
         return item
 
-    def next(self) -> _T:
-        return self.__next__()
+    async def next(self) -> _T:
+        return await self.__anext__()
 
     @property
     def last_evaluated_key(self) -> Optional[Dict[str, Dict[str, Any]]]:
