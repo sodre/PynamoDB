@@ -208,8 +208,10 @@ the client is closed when the count reaches zero.
 
 - `PATCH_METHOD` in async tests targets `pynamodb.asyncio.connection.Connection._make_api_call`;
   `patch` on an `async def` yields an `AsyncMock` (to confirm on first conversion).
-- Async test modules set `pytestmark = pytest.mark.asyncio`; `unittest` classes use
-  `IsolatedAsyncioTestCase`.
+- `pytest.ini` sets `asyncio_mode = auto`, so async test functions need no marker (a module-level
+  `pytestmark` would also mark the plain tests converted files keep); `unittest` classes use
+  `IsolatedAsyncioTestCase`. The generator still drops a `pytestmark = pytest.mark.asyncio` line
+  defensively.
 - `tests/asyncio/conftest.py` skips the folder on Python < 3.10 or without `aiobotocore`.
 - New tests: client sharing key (same settings share, different `extra_headers` do not), reference
   counting, `connections()` closes all, async `client` property raises before open, loop change
