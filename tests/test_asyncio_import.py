@@ -107,3 +107,27 @@ def test_sync_modules_keep_time_for_existing_patches():
     with mock.patch('pynamodb.models.time.sleep') as sleep:
         _compat.sleep(2)
     sleep.assert_called_once_with(2)
+
+
+def test_sync_table_connection_close_closes_client():
+    from unittest import mock
+    from pynamodb.connection import TableConnection
+
+    table = TableConnection('mock', region='us-east-1')
+    client = table.connection.get_client()
+    with mock.patch.object(client, 'close', wraps=client.close) as close:
+        table.close()
+    close.assert_called_once_with()
+    assert table.connection._client is None
+
+
+def test_sync_open_connections_tracks_opened_clients():
+    from pynamodb.connection import Connection
+    from pynamodb.connection.base import _open_connections
+
+    conn = Connection(region='us-east-1')
+    assert conn not in _open_connections
+    conn.get_client()
+    assert conn in _open_connections
+    conn.close()
+    assert conn not in _open_connections

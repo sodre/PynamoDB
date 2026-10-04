@@ -43,3 +43,27 @@ async def test_repr_does_not_raise_before_open():
     await conn.get_client()
     assert 'dynamodb.us-east-1.amazonaws.com' in repr(conn)
     await conn.close()
+
+
+async def test_table_connection_close_releases_client():
+    from pynamodb.asyncio import _compat
+    from pynamodb.asyncio.connection import TableConnection
+
+    table = TableConnection('mock', region='us-east-1')
+    client = await table.connection.get_client()
+    await table.close()
+
+    assert table.connection._client is None
+    entries = _compat._clients.get(asyncio.get_running_loop(), {}).values()
+    assert all(entry.client is not client for entry in entries)
+
+
+async def test_open_connections_tracks_opened_clients():
+    from pynamodb.asyncio.connection.base import _open_connections
+
+    conn = Connection(region='us-east-1')
+    assert conn not in _open_connections
+    await conn.get_client()
+    assert conn in _open_connections
+    await conn.close()
+    assert conn not in _open_connections
