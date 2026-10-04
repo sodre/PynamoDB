@@ -1,5 +1,3 @@
-import pytest
-
 from pynamodb.asyncio.models import Model
 from pynamodb.attributes import UnicodeAttribute
 

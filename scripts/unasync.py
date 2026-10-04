@@ -45,7 +45,11 @@ RULES: List[Tuple["re.Pattern[str]", str]] = [
         (r"\basync def\b", "def"),
         (r"\basync with\b", "with"),
         (r"\basync for\b", "for"),
-        (r"\(await (\w[\w.]*\([^()]*\))\)", r"\1"),  # (await f()).x -> f().x
+        # (await f(a)).x -> f(a).x. Only fires on a grouping paren (not after a name or
+        # closing bracket, so `len(await f())` is untouched). Known limits: nested calls
+        # `(await f(g(a))).y` and non-call operands `(await self.a).b` stay parenthesised,
+        # which is still valid.
+        (r"(?<![\w\])])\(await (\w[\w.]*\([^()]*\))\)", r"\1"),
         (r"\bawait ", ""),
         (r"\b__aenter__\b", "__enter__"),
         (r"\b__aexit__\b", "__exit__"),

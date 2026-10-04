@@ -3,6 +3,8 @@ Async halves of operations that differ between the sync and async APIs.
 
 See pynamodb/_compat.py for the sync halves; keep public names in step. This is
 the only module under pynamodb/asyncio/ allowed to import asyncio.
+
+`alist` is async-only: the generator rewrites `_compat.alist(` to `list(`.
 """
 import asyncio
 import time
