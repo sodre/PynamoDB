@@ -106,10 +106,18 @@ Querying an index
 Index queries use the same syntax as model queries. Continuing our example, we can query
 the ``view_index``  global secondary index simply by calling ``query``:
 
-.. code-block:: python
+.. tabs::
 
-    for item in TestModel.view_index.query(1):
-        print("Item queried from index: {0}".format(item))
+   .. code-tab:: python Sync
+
+      for item in TestModel.view_index.query(1):
+          print("Item queried from index: {0}".format(item))
+
+   .. code-tab:: python Async
+
+      # TestModel is declared with Model from pynamodb.asyncio.models
+      async for item in TestModel.view_index.query(1):
+          print("Item queried from index: {0}".format(item))
 
 This example queries items from the table using the global secondary index, called ``view_index``, using
 a hash key value of 1 for the index. This would return all ``TestModel`` items that have a ``view`` attribute
@@ -118,10 +126,17 @@ of value 1.
 Local secondary index queries have a similar syntax. They require a hash key, and can include conditions on the
 range key of the index. Here is an example that queries the index for values of ``view`` greater than zero:
 
-.. code-block:: python
+.. tabs::
 
-    for item in TestModel.view_index.query('foo', TestModel.view > 0):
-        print("Item queried from index: {0}".format(item.view))
+   .. code-tab:: python Sync
+
+      for item in TestModel.view_index.query('foo', TestModel.view > 0):
+          print("Item queried from index: {0}".format(item.view))
+
+   .. code-tab:: python Async
+
+      async for item in TestModel.view_index.query('foo', TestModel.view > 0):
+          print("Item queried from index: {0}".format(item.view))
 
 
 Pagination and last evaluated key
@@ -131,15 +146,27 @@ The query returns a ``ResultIterator`` object that transparently paginates throu
 To stop iterating and allow the caller to continue later on, use the ``last_evaluated_key`` property
 of the iterator:
 
-.. code-block:: python
+.. tabs::
 
-   def iterate_over_page(last_evaluated_key = None):
-       results = TestModel.view_index.query('foo', TestModel.view > 0,
-                                            limit=10,
-                                            last_evaluated_key=last_evaluated_key)
-       for item in results:
-          ...
-       return results.last_evaluated_key
+   .. code-tab:: python Sync
+
+      def iterate_over_page(last_evaluated_key = None):
+          results = TestModel.view_index.query('foo', TestModel.view > 0,
+                                               limit=10,
+                                               last_evaluated_key=last_evaluated_key)
+          for item in results:
+             ...
+          return results.last_evaluated_key
+
+   .. code-tab:: python Async
+
+      async def iterate_over_page(last_evaluated_key = None):
+          results = TestModel.view_index.query('foo', TestModel.view > 0,
+                                               limit=10,
+                                               last_evaluated_key=last_evaluated_key)
+          async for item in results:
+             ...
+          return results.last_evaluated_key
    
 The ``last_evaluated_key`` is effectively the key attributes of the last iterated item; the next returned items will be the items following it. For index queries, the returned ``last_evaluated_key`` will contain both the table's hash/range keys and the indexes hash/range keys. This is due to the fact that DynamoDB indexes have no uniqueness constraint, i.e. the same hash/range pair can map to multiple items. For the example above, the ``last_evaluated_key`` will look like:
 

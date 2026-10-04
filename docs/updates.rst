@@ -60,66 +60,127 @@ The following expressions and functions can only be used in the context of the a
 
 The ``set`` action is the simplest action as it overwrites any previously stored value:
 
-.. code-block:: python
+.. tabs::
 
-    thread.update(actions=[
-        Thread.views.set(10),
-    ])
-    assert thread.views == 10
+   .. code-tab:: python Sync
+
+      thread.update(actions=[
+          Thread.views.set(10),
+      ])
+      assert thread.views == 10
+
+   .. code-tab:: python Async
+
+      # Thread is declared with Model from pynamodb.asyncio.models
+      await thread.update(actions=[
+          Thread.views.set(10),
+      ])
+      assert thread.views == 10
 
 It can reference existing values (from this or other attributes) for arithmetics and concatenation:
 
-.. code-block:: python
+.. tabs::
 
-    # Increment views by 5
-    thread.update(actions=[
-        Thread.views.set(Thread.views + 5)
-    ])
+   .. code-tab:: python Sync
 
-    # Append 2 notes
-    thread.update(actions=[
-        Thread.notes.set(
-            Thread.notes.append([
-                'my last note',
-                'p.s. no, really, this is my last note',
-            ]),
-        )
-    ])
+      # Increment views by 5
+      thread.update(actions=[
+          Thread.views.set(Thread.views + 5)
+      ])
 
-    # Prepend a note
-    thread.update(actions=[
-        Thread.notes.set(
-            Thread.notes.prepend([
-                'my first note',
-            ]),
-        )
-    ])
+      # Append 2 notes
+      thread.update(actions=[
+          Thread.notes.set(
+              Thread.notes.append([
+                  'my last note',
+                  'p.s. no, really, this is my last note',
+              ]),
+          )
+      ])
 
-    # Set author to John Doe unless there's already one
-    thread.update(actions=[
-        Thread.author.set(Thread.author | 'John Doe')
-    ])
+      # Prepend a note
+      thread.update(actions=[
+          Thread.notes.set(
+              Thread.notes.prepend([
+                  'my first note',
+              ]),
+          )
+      ])
+
+      # Set author to John Doe unless there's already one
+      thread.update(actions=[
+          Thread.author.set(Thread.author | 'John Doe')
+      ])
+
+   .. code-tab:: python Async
+
+      # Increment views by 5
+      await thread.update(actions=[
+          Thread.views.set(Thread.views + 5)
+      ])
+
+      # Append 2 notes
+      await thread.update(actions=[
+          Thread.notes.set(
+              Thread.notes.append([
+                  'my last note',
+                  'p.s. no, really, this is my last note',
+              ]),
+          )
+      ])
+
+      # Prepend a note
+      await thread.update(actions=[
+          Thread.notes.set(
+              Thread.notes.prepend([
+                  'my first note',
+              ]),
+          )
+      ])
+
+      # Set author to John Doe unless there's already one
+      await thread.update(actions=[
+          Thread.author.set(Thread.author | 'John Doe')
+      ])
 
 ``remove`` action
 ^^^^^^^^^^^^^^^^^
 
 The ``remove`` action unsets attributes:
 
-.. code-block:: python
+.. tabs::
 
-    thread.update(actions=[
-        Thread.views.remove(),
-    ])
-    assert thread.views == 0  # default value
+   .. code-tab:: python Sync
+
+      thread.update(actions=[
+          Thread.views.remove(),
+      ])
+      assert thread.views == 0  # default value
+
+   .. code-tab:: python Async
+
+      await thread.update(actions=[
+          Thread.views.remove(),
+      ])
+      assert thread.views == 0  # default value
 
 It can also be used to remove elements from a list attribute:
 
-.. code-block:: python
+.. tabs::
 
-    # Remove the first note
-    thread.update(actions=[
-        Thread.notes[0].remove(),
-    ])
+   .. code-tab:: python Sync
+
+      # Remove the first note
+      thread.update(actions=[
+          Thread.notes[0].remove(),
+      ])
+
+   .. code-tab:: python Async
+
+      # Remove the first note
+      await thread.update(actions=[
+          Thread.notes[0].remove(),
+      ])
 
 
 ``add`` action
@@ -127,35 +188,66 @@ It can also be used to remove elements from a list attribute:
 
 Applying to (binary, number and string) set attributes, the ``add`` action adds elements to the set:
 
-.. code-block:: python
+.. tabs::
 
-    # Add the subjects 'A New Subject' and 'Another New Subject'
-    thread.update(actions=[
-        Thread.subjects.add({'A New Subject', 'Another New Subject'})
-    ])
+   .. code-tab:: python Sync
+
+      # Add the subjects 'A New Subject' and 'Another New Subject'
+      thread.update(actions=[
+          Thread.subjects.add({'A New Subject', 'Another New Subject'})
+      ])
+
+   .. code-tab:: python Async
+
+      # Add the subjects 'A New Subject' and 'Another New Subject'
+      await thread.update(actions=[
+          Thread.subjects.add({'A New Subject', 'Another New Subject'})
+      ])
 
 Applying to number attributes, the ``add`` action increments or decrements the number
 and is equivalent to a ``set`` action:
 
-.. code-block:: python
+.. tabs::
 
-    # Increment views by 5
-    thread.update(actions=[
-        Thread.views.add(5),
-    ])
-    # Also increment views by 5
-    thread.update(actions=[
-        Thread.views.set(Thread.views + 5),
-    ])
+   .. code-tab:: python Sync
+
+      # Increment views by 5
+      thread.update(actions=[
+          Thread.views.add(5),
+      ])
+      # Also increment views by 5
+      thread.update(actions=[
+          Thread.views.set(Thread.views + 5),
+      ])
+
+   .. code-tab:: python Async
+
+      # Increment views by 5
+      await thread.update(actions=[
+          Thread.views.add(5),
+      ])
+      # Also increment views by 5
+      await thread.update(actions=[
+          Thread.views.set(Thread.views + 5),
+      ])
 
 ``delete`` action
 ^^^^^^^^^^^^^^^^^
 
 For set attributes, the ``delete`` action is the opposite of the ``add`` action:
 
-.. code-block:: python
+.. tabs::
 
-    # Delete the subject 'An Old Subject'
-    thread.update(actions=[
-        Thread.subjects.delete({'An Old Subject'})
-    ])
+   .. code-tab:: python Sync
+
+      # Delete the subject 'An Old Subject'
+      thread.update(actions=[
+          Thread.subjects.delete({'An Old Subject'})
+      ])
+
+   .. code-tab:: python Async
+
+      # Delete the subject 'An Old Subject'
+      await thread.update(actions=[
+          Thread.subjects.delete({'An Old Subject'})
+      ])

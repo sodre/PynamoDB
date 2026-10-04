@@ -222,10 +222,18 @@ Creating the table
 
 If your table doesn't already exist, you will have to create it. This can be done with easily:
 
-.. code-block:: python
+.. tabs::
 
-    >>> if not Thread.exists():
-            Thread.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+   .. code-tab:: python Sync
+
+      >>> if not Thread.exists():
+              Thread.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
+
+   .. code-tab:: python Async
+
+      >>> # Thread is declared with Model from pynamodb.asyncio.models
+      >>> if not await Thread.exists():
+              await Thread.create_table(read_capacity_units=1, write_capacity_units=1, wait=True)
 
 The ``wait`` argument tells PynamoDB to wait until the table is ready for use before returning.
 
@@ -235,9 +243,15 @@ Deleting a table
 
 Deleting is made quite simple when using a `Model`:
 
-.. code-block:: python
+.. tabs::
 
-    >>> Thread.delete_table()
+   .. code-tab:: python Sync
+
+      >>> Thread.delete_table()
+
+   .. code-tab:: python Async
+
+      >>> await Thread.delete_table()
 
 Using the Model
 ^^^^^^^^^^^^^^^
@@ -260,15 +274,27 @@ specify attributes during construction as well:
 
 The item won't be added to your DynamoDB table until you call save:
 
-.. code-block:: python
+.. tabs::
 
-    >>> thread_item.save()
+   .. code-tab:: python Sync
+
+      >>> thread_item.save()
+
+   .. code-tab:: python Async
+
+      >>> await thread_item.save()
 
 If you want to retrieve an item that already exists in your table, you can do that with `get`:
 
-.. code-block:: python
+.. tabs::
 
-    >>> thread_item = Thread.get('forum_name', 'forum_subject')
+   .. code-tab:: python Sync
+
+      >>> thread_item = Thread.get('forum_name', 'forum_subject')
+
+   .. code-tab:: python Async
+
+      >>> thread_item = await Thread.get('forum_name', 'forum_subject')
 
 If the item doesn't exist, `Thread.DoesNotExist` will be raised.
 
@@ -277,19 +303,34 @@ Updating Items
 
 You can update an item with the latest data from your table:
 
-.. code-block:: python
+.. tabs::
 
-    >>> thread_item.refresh()
+   .. code-tab:: python Sync
+
+      >>> thread_item.refresh()
+
+   .. code-tab:: python Async
+
+      >>> await thread_item.refresh()
 
 Updates to table items are supported too, even atomic updates. Here is an example of
 atomically updating the view count of an item + updating the value of the last post.
 
-.. code-block:: python
+.. tabs::
 
-    >>> thread_item.update(actions=[
-            Thread.views.set(Thread.views + 1),
-            Thread.last_post_datetime.set(datetime.now()),
-        ])
+   .. code-tab:: python Sync
+
+      >>> thread_item.update(actions=[
+              Thread.views.set(Thread.views + 1),
+              Thread.last_post_datetime.set(datetime.now()),
+          ])
+
+   .. code-tab:: python Async
+
+      >>> await thread_item.update(actions=[
+              Thread.views.set(Thread.views + 1),
+              Thread.last_post_datetime.set(datetime.now()),
+          ])
 
 Update actions use the update expression syntax (see :ref:`updates`).
 

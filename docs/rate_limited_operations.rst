@@ -34,11 +34,20 @@ Suppose that you have defined a `User` Model for the examples below.
 
 Here is an example using `rate-limit` in while scanning the `User` model
 
-.. code-block:: python
+.. tabs::
 
-    # Using only 5 RCU per second
-    for user in User.scan(rate_limit=5):
-        print("User id: {}, name: {}".format(user.id, user.name))
+   .. code-tab:: python Sync
+
+      # Using only 5 RCU per second
+      for user in User.scan(rate_limit=5):
+          print("User id: {}, name: {}".format(user.id, user.name))
+
+   .. code-tab:: python Async
+
+      # User is declared with Model from pynamodb.asyncio.models
+      # Using only 5 RCU per second
+      async for user in User.scan(rate_limit=5):
+          print("User id: {}, name: {}".format(user.id, user.name))
 
 
 Query
@@ -46,11 +55,19 @@ Query
 
 You can use `rate-limit` when querying items from your table:
 
-.. code-block:: python
+.. tabs::
 
-    # Using only 15 RCU per second
-    for user in User.query('id1', User.name.startswith('re'), rate_limit = 15):
-        print("Query returned user {0}".format(user))
+   .. code-tab:: python Sync
+
+      # Using only 15 RCU per second
+      for user in User.query('id1', User.name.startswith('re'), rate_limit = 15):
+          print("Query returned user {0}".format(user))
+
+   .. code-tab:: python Async
+
+      # Using only 15 RCU per second
+      async for user in User.query('id1', User.name.startswith('re'), rate_limit = 15):
+          print("Query returned user {0}".format(user))
 
 
 Count
@@ -58,9 +75,17 @@ Count
 
 You can use `rate-limit` when counting items in your table:
 
-.. code-block:: python
+.. tabs::
 
-    # Using only 15 RCU per second
-    count = User.count(rate_limit=15)
-    print("Count : {}".format(count))
+   .. code-tab:: python Sync
+
+      # Using only 15 RCU per second
+      count = User.count(rate_limit=15)
+      print("Count : {}".format(count))
+
+   .. code-tab:: python Async
+
+      # Using only 15 RCU per second
+      count = await User.count(rate_limit=15)
+      print("Count : {}".format(count))
     

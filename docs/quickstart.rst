@@ -33,7 +33,16 @@ will be used to determine the region.
 
 PynamoDB allows you to create the table:
 
-    >>> UserModel.create_table(read_capacity_units=1, write_capacity_units=1)
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      >>> UserModel.create_table(read_capacity_units=1, write_capacity_units=1)
+
+   .. code-tab:: python Async
+
+      >>> # UserModel is declared with Model from pynamodb.asyncio.models
+      >>> await UserModel.create_table(read_capacity_units=1, write_capacity_units=1)
 
 Now you can create a user in local memory:
 
@@ -42,12 +51,29 @@ Now you can create a user in local memory:
 
 To write the user to DynamoDB, just call save:
 
-    >>> user.save()
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      >>> user.save()
+
+   .. code-tab:: python Async
+
+      >>> await user.save()
 
 You can see that the table count has changed:
 
-    >>> UserModel.count()
-    1
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      >>> UserModel.count()
+      1
+
+   .. code-tab:: python Async
+
+      >>> await UserModel.count()
+      1
 
 Attributes can be accessed and set normally:
 
@@ -57,13 +83,29 @@ Attributes can be accessed and set normally:
     >>> user.email
     'foo-bar
 
-Did another process update the user? We can refresh the user with data from DynamoDB::
+Did another process update the user? We can refresh the user with data from DynamoDB:
 
-    >>> user.refresh()
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      >>> user.refresh()
+
+   .. code-tab:: python Async
+
+      >>> await user.refresh()
 
 Ready to delete the user?
 
-    >>> user.delete()
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      >>> user.delete()
+
+   .. code-tab:: python Async
+
+      >>> await user.delete()
 
 .. _changing-items:
 
@@ -74,20 +116,43 @@ Changing existing items in the database can be done using either
 `update()` or `save()`. There are important differences between the
 two.
 
-Use of `save()` looks like this::
+Use of `save()` looks like this:
 
-    user = UserModel.get('test@example.com')
-    user.first_name = 'Robert'
-    user.save()
+.. tabs::
 
-Use of `update()` (in its simplest form) looks like this::
+   .. code-tab:: python Sync
 
-    user = UserModel.get('test@example.com')
-    user.update(
-      actions=[
-        UserModel.first_name.set('Robert')
-      ]
-    )
+      user = UserModel.get('test@example.com')
+      user.first_name = 'Robert'
+      user.save()
+
+   .. code-tab:: python Async
+
+      user = await UserModel.get('test@example.com')
+      user.first_name = 'Robert'
+      await user.save()
+
+Use of `update()` (in its simplest form) looks like this:
+
+.. tabs::
+
+   .. code-tab:: python Sync
+
+      user = UserModel.get('test@example.com')
+      user.update(
+        actions=[
+          UserModel.first_name.set('Robert')
+        ]
+      )
+
+   .. code-tab:: python Async
+
+      user = await UserModel.get('test@example.com')
+      await user.update(
+        actions=[
+          UserModel.first_name.set('Robert')
+        ]
+      )
 
 `save()` will entirely replace an object (it internally uses `PutItem
 <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html>`_). As
@@ -134,17 +199,31 @@ and a range key that is the user's first name:
 Now, suppose that you want to search the table for users with a last name
 'Smith', and first name that begins with the letter 'J':
 
-::
+.. tabs::
 
-    for user in UserModel.query('Smith', UserModel.first_name.startswith('J')):
-        print(user.first_name)
+   .. code-tab:: python Sync
+
+      for user in UserModel.query('Smith', UserModel.first_name.startswith('J')):
+          print(user.first_name)
+
+   .. code-tab:: python Async
+
+      async for user in UserModel.query('Smith', UserModel.first_name.startswith('J')):
+          print(user.first_name)
 
 You can combine query terms:
 
-::
+.. tabs::
 
-    for user in UserModel.query('Smith', UserModel.first_name.startswith('J') | UserModel.email.contains('domain.com')):
-        print(user)
+   .. code-tab:: python Sync
+
+      for user in UserModel.query('Smith', UserModel.first_name.startswith('J') | UserModel.email.contains('domain.com')):
+          print(user)
+
+   .. code-tab:: python Async
+
+      async for user in UserModel.query('Smith', UserModel.first_name.startswith('J') | UserModel.email.contains('domain.com')):
+          print(user)
 
 
 Counting Items
@@ -152,35 +231,63 @@ Counting Items
 
 You can retrieve the count for queries by using the `count` method:
 
-::
+.. tabs::
 
-    print(UserModel.count('Smith', UserModel.first_name.startswith('J'))
+   .. code-tab:: python Sync
+
+      print(UserModel.count('Smith', UserModel.first_name.startswith('J'))
+
+   .. code-tab:: python Async
+
+      print(await UserModel.count('Smith', UserModel.first_name.startswith('J')))
 
 
 Counts also work for indexes:
 
-::
+.. tabs::
 
-    print(UserModel.custom_index.count('my_hash_key'))
+   .. code-tab:: python Sync
+
+      print(UserModel.custom_index.count('my_hash_key'))
+
+   .. code-tab:: python Async
+
+      print(await UserModel.custom_index.count('my_hash_key'))
 
 
 Alternatively, you can retrieve the table item count by calling the `count` method without filters:
 
-::
+.. tabs::
 
-    print(UserModel.count())
+   .. code-tab:: python Sync
+
+      print(UserModel.count())
+
+   .. code-tab:: python Async
+
+      print(await UserModel.count())
 
 
 Note that the first positional argument to `count()` is a `hash_key`. Although
 this argument can be `None`, filters must not be used when `hash_key` is `None`:
 
-::
+.. tabs::
 
-    # raises a ValueError
-    print(UserModel.count(UserModel.first_name == 'John'))
+   .. code-tab:: python Sync
 
-    # returns count of only the matching users
-    print(UserModel.count('my_hash_key', UserModel.first_name == 'John'))
+      # raises a ValueError
+      print(UserModel.count(UserModel.first_name == 'John'))
+
+      # returns count of only the matching users
+      print(UserModel.count('my_hash_key', UserModel.first_name == 'John'))
+
+   .. code-tab:: python Async
+
+      # raises a ValueError
+      print(await UserModel.count(UserModel.first_name == 'John'))
+
+      # returns count of only the matching users
+      print(await UserModel.count('my_hash_key', UserModel.first_name == 'John'))
 
 
 Batch Operations
@@ -194,25 +301,50 @@ Batch Operations
 
 Let's create a whole bunch of users:
 
-::
+.. tabs::
 
-    with UserModel.batch_write() as batch:
-        for i in range(100):
-            batch.save(UserModel('user-{0}@example.com'.format(i), first_name='Samuel', last_name='Adams'))
+   .. code-tab:: python Sync
+
+      with UserModel.batch_write() as batch:
+          for i in range(100):
+              batch.save(UserModel('user-{0}@example.com'.format(i), first_name='Samuel', last_name='Adams'))
+
+   .. code-tab:: python Async
+
+      async with UserModel.batch_write() as batch:
+          for i in range(100):
+              await batch.save(UserModel('user-{0}@example.com'.format(i), first_name='Samuel', last_name='Adams'))
 
 Now, suppose you want to retrieve all those users:
 
-::
+.. tabs::
 
-    user_keys = [('user-{0}@example.com'.format(i)) for i in range(100)]
-    for item in UserModel.batch_get(user_keys):
-        print(item)
+   .. code-tab:: python Sync
+
+      user_keys = [('user-{0}@example.com'.format(i)) for i in range(100)]
+      for item in UserModel.batch_get(user_keys):
+          print(item)
+
+   .. code-tab:: python Async
+
+      user_keys = [('user-{0}@example.com'.format(i)) for i in range(100)]
+      async for item in UserModel.batch_get(user_keys):
+          print(item)
 
 Perhaps you want to delete all these users:
 
-::
+.. tabs::
 
-    with UserModel.batch_write() as batch:
-        items = [UserModel('user-{0}@example.com'.format(x)) for x in range(100)]
-        for item in items:
-            batch.delete(item)
+   .. code-tab:: python Sync
+
+      with UserModel.batch_write() as batch:
+          items = [UserModel('user-{0}@example.com'.format(x)) for x in range(100)]
+          for item in items:
+              batch.delete(item)
+
+   .. code-tab:: python Async
+
+      async with UserModel.batch_write() as batch:
+          items = [UserModel('user-{0}@example.com'.format(x)) for x in range(100)]
+          for item in items:
+              await batch.delete(item)

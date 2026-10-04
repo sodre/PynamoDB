@@ -100,16 +100,30 @@ already defined it.
 
 Now we can use our custom attribute to round trip any object that can be pickled.
 
-.. code-block:: python
+.. tabs::
 
-    >>>instance = CustomAttributeModel()
-    >>>instance.obj = Color('red')
-    >>>instance.id = 'red'
-    >>>instance.save()
+   .. code-tab:: python Sync
 
-    >>>instance = CustomAttributeModel.get('red')
-    >>>print(instance.obj)
-    <Color: red>
+      >>>instance = CustomAttributeModel()
+      >>>instance.obj = Color('red')
+      >>>instance.id = 'red'
+      >>>instance.save()
+
+      >>>instance = CustomAttributeModel.get('red')
+      >>>print(instance.obj)
+      <Color: red>
+
+   .. code-tab:: python Async
+
+      >>># CustomAttributeModel is declared with Model from pynamodb.asyncio.models
+      >>>instance = CustomAttributeModel()
+      >>>instance.obj = Color('red')
+      >>>instance.id = 'red'
+      >>>await instance.save()
+
+      >>>instance = await CustomAttributeModel.get('red')
+      >>>print(instance.obj)
+      <Color: red>
 
 
 List Attributes
@@ -137,46 +151,90 @@ Creating an untyped list is done like so:
 PynamoDB can provide type safety if it is required. Currently PynamoDB does not allow type checks on anything other than subclasses of ``Attribute``. We're working on adding more generic type checking in a future version.
 When defining your model use the ``of=`` kwarg and pass in a class. PynamoDB will check that all items in the list are of the type you require.
 
-.. code-block:: python
+.. tabs::
 
-    from pynamodb.attributes import ListAttribute, NumberAttribute
+   .. code-tab:: python Sync
 
-
-    class OfficeEmployeeMap(MapAttribute):
-        office_employee_id = NumberAttribute()
-        person = UnicodeAttribute()
+      from pynamodb.attributes import ListAttribute, NumberAttribute
 
 
-    class Office(Model):
-        class Meta:
-            table_name = 'OfficeModel'
-        office_id = NumberAttribute(hash_key=True)
-        employees = ListAttribute(of=OfficeEmployeeMap)
+      class OfficeEmployeeMap(MapAttribute):
+          office_employee_id = NumberAttribute()
+          person = UnicodeAttribute()
 
-    # Example usage:
 
-    emp1 = OfficeEmployeeMap(
-        office_employee_id=123,
-        person='justin'
-    )
-    emp2 = OfficeEmployeeMap(
-        office_employee_id=125,
-        person='lita'
-    )
-    emp4 = OfficeEmployeeMap(
-        office_employee_id=126,
-        person='garrett'
-    )
+      class Office(Model):
+          class Meta:
+              table_name = 'OfficeModel'
+          office_id = NumberAttribute(hash_key=True)
+          employees = ListAttribute(of=OfficeEmployeeMap)
 
-    Office(
-        office_id=3,
-        employees=[emp1, emp2, emp3]
-    ).save()  # persists
+      # Example usage:
 
-    Office(
-        office_id=3,
-        employees=['justin', 'lita', 'garrett']
-    ).save()  # raises ValueError
+      emp1 = OfficeEmployeeMap(
+          office_employee_id=123,
+          person='justin'
+      )
+      emp2 = OfficeEmployeeMap(
+          office_employee_id=125,
+          person='lita'
+      )
+      emp4 = OfficeEmployeeMap(
+          office_employee_id=126,
+          person='garrett'
+      )
+
+      Office(
+          office_id=3,
+          employees=[emp1, emp2, emp3]
+      ).save()  # persists
+
+      Office(
+          office_id=3,
+          employees=['justin', 'lita', 'garrett']
+      ).save()  # raises ValueError
+
+   .. code-tab:: python Async
+
+      from pynamodb.asyncio.models import Model
+      from pynamodb.attributes import ListAttribute, NumberAttribute
+
+
+      class OfficeEmployeeMap(MapAttribute):
+          office_employee_id = NumberAttribute()
+          person = UnicodeAttribute()
+
+
+      class Office(Model):
+          class Meta:
+              table_name = 'OfficeModel'
+          office_id = NumberAttribute(hash_key=True)
+          employees = ListAttribute(of=OfficeEmployeeMap)
+
+      # Example usage:
+
+      emp1 = OfficeEmployeeMap(
+          office_employee_id=123,
+          person='justin'
+      )
+      emp2 = OfficeEmployeeMap(
+          office_employee_id=125,
+          person='lita'
+      )
+      emp4 = OfficeEmployeeMap(
+          office_employee_id=126,
+          person='garrett'
+      )
+
+      await Office(
+          office_id=3,
+          employees=[emp1, emp2, emp3]
+      ).save()  # persists
+
+      await Office(
+          office_id=3,
+          employees=['justin', 'lita', 'garrett']
+      ).save()  # raises ValueError
 
 Map Attributes
 --------------

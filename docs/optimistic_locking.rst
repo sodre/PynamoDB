@@ -55,24 +55,46 @@ attribute will change the model's behaviors:
 The attribute is underpinned by an integer which is initialized with 1 when an item is saved for the first time
 and is incremented by 1 with each subsequent write operation.
 
-.. code-block:: python
+.. tabs::
 
-  justin = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='justin')
-  garrett = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='garrett')
-  office = Office(office_id=str(uuid4()), name="office", employees=[justin, garrett])
-  office.save()
-  assert office.version == 1
+   .. code-tab:: python Sync
 
-  # Get a second local copy of Office
-  office_out_of_date = Office.get(office.office_id)
+      justin = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='justin')
+      garrett = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='garrett')
+      office = Office(office_id=str(uuid4()), name="office", employees=[justin, garrett])
+      office.save()
+      assert office.version == 1
 
-  # Add another employee and persist the change.
-  office.employees.append(OfficeEmployeeMap(office_employee_id=str(uuid4()), person='lita'))
-  office.save()
-  # On subsequent save or update operations the version is also incremented locally to match the persisted value so
-  # there's no need to refresh between operations when reusing the local copy.
-  assert office.version == 2
-  assert office_out_of_date.version == 1
+      # Get a second local copy of Office
+      office_out_of_date = Office.get(office.office_id)
+
+      # Add another employee and persist the change.
+      office.employees.append(OfficeEmployeeMap(office_employee_id=str(uuid4()), person='lita'))
+      office.save()
+      # On subsequent save or update operations the version is also incremented locally to match the persisted value so
+      # there's no need to refresh between operations when reusing the local copy.
+      assert office.version == 2
+      assert office_out_of_date.version == 1
+
+   .. code-tab:: python Async
+
+      # Office is declared with Model from pynamodb.asyncio.models
+      justin = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='justin')
+      garrett = OfficeEmployeeMap(office_employee_id=str(uuid4()), person='garrett')
+      office = Office(office_id=str(uuid4()), name="office", employees=[justin, garrett])
+      await office.save()
+      assert office.version == 1
+
+      # Get a second local copy of Office
+      office_out_of_date = await Office.get(office.office_id)
+
+      # Add another employee and persist the change.
+      office.employees.append(OfficeEmployeeMap(office_employee_id=str(uuid4()), person='lita'))
+      await office.save()
+      # On subsequent save or update operations the version is also incremented locally to match the persisted value so
+      # there's no need to refresh between operations when reusing the local copy.
+      assert office.version == 2
+      assert office_out_of_date.version == 1
 
 The version checking is implemented using DynamoDB conditional write constraints, asserting that no value exists
 for the version attribute on the initial save and that the persisted value matches the local value on subsequent writes.
@@ -82,38 +104,76 @@ Model.{update, save, delete}
 ----------------------------
 These operations will fail if the local object is out-of-date.
 
-.. code-block:: python
+.. tabs::
 
-  @contextmanager
-  def assert_condition_check_fails():
-      try:
-          yield
-      except (PutError, UpdateError, DeleteError) as e:
-          assert isinstance(e.cause, ClientError)
-          assert e.cause_response_code == "ConditionalCheckFailedException"
-      except TransactWriteError as e:
-          assert isinstance(e.cause, ClientError)
-          assert e.cause_response_code == "TransactionCanceledException"
-          assert any(r.code == "ConditionalCheckFailed" for r in e.cancellation_reasons)
-      else:
-          raise AssertionError("The version attribute conditional check should have failed.")
+   .. code-tab:: python Sync
+
+      @contextmanager
+      def assert_condition_check_fails():
+          try:
+              yield
+          except (PutError, UpdateError, DeleteError) as e:
+              assert isinstance(e.cause, ClientError)
+              assert e.cause_response_code == "ConditionalCheckFailedException"
+          except TransactWriteError as e:
+              assert isinstance(e.cause, ClientError)
+              assert e.cause_response_code == "TransactionCanceledException"
+              assert any(r.code == "ConditionalCheckFailed" for r in e.cancellation_reasons)
+          else:
+              raise AssertionError("The version attribute conditional check should have failed.")
 
 
-  with assert_condition_check_fails():
-      office_out_of_date.update(actions=[Office.name.set('new office name')])
+      with assert_condition_check_fails():
+          office_out_of_date.update(actions=[Office.name.set('new office name')])
 
-  office_out_of_date.employees.remove(garrett)
-  with assert_condition_check_fails():
+      office_out_of_date.employees.remove(garrett)
+      with assert_condition_check_fails():
+          office_out_of_date.save()
+
+      # After refreshing the local copy our write operations succeed.
+      office_out_of_date.refresh()
+      office_out_of_date.employees.remove(garrett)
       office_out_of_date.save()
+      assert office_out_of_date.version == 3
 
-  # After refreshing the local copy our write operations succeed.
-  office_out_of_date.refresh()
-  office_out_of_date.employees.remove(garrett)
-  office_out_of_date.save()
-  assert office_out_of_date.version == 3
+      with assert_condition_check_fails():
+          office.delete()
 
-  with assert_condition_check_fails():
-      office.delete()
+   .. code-tab:: python Async
+
+      from contextlib import asynccontextmanager
+
+
+      @asynccontextmanager
+      async def assert_condition_check_fails():
+          try:
+              yield
+          except (PutError, UpdateError, DeleteError) as e:
+              assert isinstance(e.cause, ClientError)
+              assert e.cause_response_code == "ConditionalCheckFailedException"
+          except TransactWriteError as e:
+              assert isinstance(e.cause, ClientError)
+              assert e.cause_response_code == "TransactionCanceledException"
+              assert any(r.code == "ConditionalCheckFailed" for r in e.cancellation_reasons)
+          else:
+              raise AssertionError("The version attribute conditional check should have failed.")
+
+
+      async with assert_condition_check_fails():
+          await office_out_of_date.update(actions=[Office.name.set('new office name')])
+
+      office_out_of_date.employees.remove(garrett)
+      async with assert_condition_check_fails():
+          await office_out_of_date.save()
+
+      # After refreshing the local copy our write operations succeed.
+      await office_out_of_date.refresh()
+      office_out_of_date.employees.remove(garrett)
+      await office_out_of_date.save()
+      assert office_out_of_date.version == 3
+
+      async with assert_condition_check_fails():
+          await office.delete()
 
 
 .. _optimistic_locking_version_condition:
@@ -163,57 +223,113 @@ Transactions are supported.
 Successful
 __________
 
-.. code-block:: python
+.. tabs::
 
-  connection = Connection(host='http://localhost:8000')
+   .. code-tab:: python Sync
 
-  office2 = Office(office_id=str(uuid4()), name="second office", employees=[justin])
-  office2.save()
-  assert office2.version == 1
-  office3 = Office(office_id=str(uuid4()), name="third office", employees=[garrett])
-  office3.save()
-  assert office3.version == 1
+      connection = Connection(host='http://localhost:8000')
 
-  with TransactWrite(connection=connection) as transaction:
-      transaction.condition_check(Office, office.office_id, condition=(Office.name.exists()))
-      transaction.delete(office2)
-      transaction.save(Office(office_id=str(uuid4()), name="new office", employees=[justin, garrett]))
-      transaction.update(
-          office3,
-          actions=[
-              Office.name.set('birdistheword'),
-          ]
-      )
+      office2 = Office(office_id=str(uuid4()), name="second office", employees=[justin])
+      office2.save()
+      assert office2.version == 1
+      office3 = Office(office_id=str(uuid4()), name="third office", employees=[garrett])
+      office3.save()
+      assert office3.version == 1
 
-  try:
-      office2.refresh()
-  except DoesNotExist:
-      pass
-  else:
-      raise AssertionError(
-          'Office with office_id="{}" should have been deleted in the transaction.'
-          .format(office2.office_id)
-      )
+      with TransactWrite(connection=connection) as transaction:
+          transaction.condition_check(Office, office.office_id, condition=(Office.name.exists()))
+          transaction.delete(office2)
+          transaction.save(Office(office_id=str(uuid4()), name="new office", employees=[justin, garrett]))
+          transaction.update(
+              office3,
+              actions=[
+                  Office.name.set('birdistheword'),
+              ]
+          )
 
-  assert office.version == 2
-  assert office3.version == 2
+      try:
+          office2.refresh()
+      except DoesNotExist:
+          pass
+      else:
+          raise AssertionError(
+              'Office with office_id="{}" should have been deleted in the transaction.'
+              .format(office2.office_id)
+          )
+
+      assert office.version == 2
+      assert office3.version == 2
+
+   .. code-tab:: python Async
+
+      from pynamodb.asyncio.connection import Connection
+      from pynamodb.asyncio.transactions import TransactWrite
+
+      connection = Connection(host='http://localhost:8000')
+
+      office2 = Office(office_id=str(uuid4()), name="second office", employees=[justin])
+      await office2.save()
+      assert office2.version == 1
+      office3 = Office(office_id=str(uuid4()), name="third office", employees=[garrett])
+      await office3.save()
+      assert office3.version == 1
+
+      async with TransactWrite(connection=connection) as transaction:
+          transaction.condition_check(Office, office.office_id, condition=(Office.name.exists()))
+          transaction.delete(office2)
+          transaction.save(Office(office_id=str(uuid4()), name="new office", employees=[justin, garrett]))
+          transaction.update(
+              office3,
+              actions=[
+                  Office.name.set('birdistheword'),
+              ]
+          )
+
+      try:
+          await office2.refresh()
+      except DoesNotExist:
+          pass
+      else:
+          raise AssertionError(
+              'Office with office_id="{}" should have been deleted in the transaction.'
+              .format(office2.office_id)
+          )
+
+      assert office.version == 2
+      assert office3.version == 2
 
 Failed
 ______
 
-.. code-block:: python
+.. tabs::
 
-  with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
-      transaction.save(Office(office.office_id, name='newer name', employees=[]))
+   .. code-tab:: python Sync
 
-  with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
-      transaction.update(
-          Office(office.office_id, name='newer name', employees=[]),
-          actions=[Office.name.set('Newer Office Name')]
-      )
+      with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.save(Office(office.office_id, name='newer name', employees=[]))
 
-  with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
-      transaction.delete(Office(office.office_id, name='newer name', employees=[]))
+      with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.update(
+              Office(office.office_id, name='newer name', employees=[]),
+              actions=[Office.name.set('Newer Office Name')]
+          )
+
+      with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.delete(Office(office.office_id, name='newer name', employees=[]))
+
+   .. code-tab:: python Async
+
+      async with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.save(Office(office.office_id, name='newer name', employees=[]))
+
+      async with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.update(
+              Office(office.office_id, name='newer name', employees=[]),
+              actions=[Office.name.set('Newer Office Name')]
+          )
+
+      async with assert_condition_check_fails(), TransactWrite(connection=connection) as transaction:
+          transaction.delete(Office(office.office_id, name='newer name', employees=[]))
 
 Batch Operations
 ----------------

@@ -35,40 +35,72 @@ Batch Writes
 
 Here is an example using a context manager for a bulk write operation:
 
-.. code-block:: python
+.. tabs::
 
-    with Thread.batch_write() as batch:
-        items = [Thread('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
-        for item in items:
-            batch.save(item)
+   .. code-tab:: python Sync
+
+      with Thread.batch_write() as batch:
+          items = [Thread('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
+          for item in items:
+              batch.save(item)
+
+   .. code-tab:: python Async
+
+      # Thread is declared with Model from pynamodb.asyncio.models
+      async with Thread.batch_write() as batch:
+          items = [Thread('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
+          for item in items:
+              await batch.save(item)
 
 Batch Gets
 ^^^^^^^^^^
 
 Here is an example using an iterator for retrieving items in bulk:
 
-.. code-block:: python
+.. tabs::
 
-    item_keys = [('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
-    for item in Thread.batch_get(item_keys):
-        print(item)
+   .. code-tab:: python Sync
+
+      item_keys = [('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
+      for item in Thread.batch_get(item_keys):
+          print(item)
+
+   .. code-tab:: python Async
+
+      item_keys = [('forum-{0}'.format(x), 'subject-{0}'.format(x)) for x in range(1000)]
+      async for item in Thread.batch_get(item_keys):
+          print(item)
 
 Query Filters
 ^^^^^^^^^^^^^
 
 You can query items from your table using a simple syntax:
 
-.. code-block:: python
+.. tabs::
 
-    for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix')):
-        print("Query returned item {0}".format(item))
+   .. code-tab:: python Sync
+
+      for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix')):
+          print("Query returned item {0}".format(item))
+
+   .. code-tab:: python Async
+
+      async for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix')):
+          print("Query returned item {0}".format(item))
 
 Additionally, you can filter the results before they are returned using condition expressions:
 
-.. code-block:: python
+.. tabs::
 
-    for item in Thread.query('ForumName', Thread.subject == 'Subject', Thread.views > 0):
-        print("Query returned item {0}".format(item))
+   .. code-tab:: python Sync
+
+      for item in Thread.query('ForumName', Thread.subject == 'Subject', Thread.views > 0):
+          print("Query returned item {0}".format(item))
+
+   .. code-tab:: python Async
+
+      async for item in Thread.query('ForumName', Thread.subject == 'Subject', Thread.views > 0):
+          print("Query returned item {0}".format(item))
 
 
 
@@ -85,17 +117,31 @@ Scan Filters
 
 Scan filters have the same syntax as Query filters, but support all condition expressions:
 
-.. code-block:: python
+.. tabs::
 
-    >>> for item in Thread.scan(Thread.forum_name.startswith('Prefix') & (Thread.views > 10)):
-            print(item)
+   .. code-tab:: python Sync
+
+      >>> for item in Thread.scan(Thread.forum_name.startswith('Prefix') & (Thread.views > 10)):
+              print(item)
+
+   .. code-tab:: python Async
+
+      >>> async for item in Thread.scan(Thread.forum_name.startswith('Prefix') & (Thread.views > 10)):
+              print(item)
 
 Limiting results
 ^^^^^^^^^^^^^^^^
 
 Both `Scan` and `Query` results can be limited to a maximum number of items using the `limit` argument.
 
-.. code-block:: python
+.. tabs::
 
-    for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix'), limit=5):
-        print("Query returned item {0}".format(item))
+   .. code-tab:: python Sync
+
+      for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix'), limit=5):
+          print("Query returned item {0}".format(item))
+
+   .. code-tab:: python Async
+
+      async for item in Thread.query('ForumName', Thread.subject.startswith('mygreatprefix'), limit=5):
+          print("Query returned item {0}".format(item))

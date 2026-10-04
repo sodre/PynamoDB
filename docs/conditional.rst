@@ -60,28 +60,54 @@ for more details.
 
 Conditions expressions using nested list and map attributes can be created with Python's item operator ``[]``.
 
-.. code-block:: python
+.. tabs::
 
-    # Query for threads where 'properties' map contains key 'emoji'
-    Thread.query(..., filter_condition=Thread.properties['emoji'].exists())
+   .. code-tab:: python Sync
 
-    # Query for threads where the first author's name contains "John"
-    Thread.authors[0].contains("John")
+      # Query for threads where 'properties' map contains key 'emoji'
+      Thread.query(..., filter_condition=Thread.properties['emoji'].exists())
+
+      # Query for threads where the first author's name contains "John"
+      Thread.authors[0].contains("John")
+
+   .. code-tab:: python Async
+
+      # Thread is declared with Model from pynamodb.asyncio.models
+
+      # Query for threads where 'properties' map contains key 'emoji'
+      [t async for t in Thread.query(..., filter_condition=Thread.properties['emoji'].exists())]
+
+      # Query for threads where the first author's name contains "John"
+      Thread.authors[0].contains("John")
 
 Conditions can be composited using ``&`` (AND) and ``|`` (OR) operators. For the ``&`` (AND) operator, the left-hand side
 operand can be ``None`` to allow easier chaining of filter conditions:
 
-.. code-block:: python
+.. tabs::
 
-  condition = None
+   .. code-tab:: python Sync
 
-  if request.subject:
-    condition &= Thread.subject.contains(request.subject)
+      condition = None
 
-  if request.min_views:
-    condition &= Thread.views >= min_views
+      if request.subject:
+        condition &= Thread.subject.contains(request.subject)
 
-  results = Thread.query(..., filter_condition=condition)
+      if request.min_views:
+        condition &= Thread.views >= min_views
+
+      results = Thread.query(..., filter_condition=condition)
+
+   .. code-tab:: python Async
+
+      condition = None
+
+      if request.subject:
+        condition &= Thread.subject.contains(request.subject)
+
+      if request.min_views:
+        condition &= Thread.views >= min_views
+
+      results = [t async for t in Thread.query(..., filter_condition=condition)]
 
 Conditioning on keys
 ^^^^^^^^^^^^^^^^^^^^
@@ -99,17 +125,31 @@ For models with a range key, conditioning ``exists()`` on either the hash key
 or the range key has the same effect. There is no way to condition on _some_ item
 existing with the given hash key. For example:
 
-.. code-block:: python
+.. tabs::
 
-    thread = Thread('DynamoDB', 'Using conditions')
+   .. code-tab:: python Sync
 
-    # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
-    # even if the item ('DynamoDB', 'Using update expressions') does.
-    thread.save(condition=Thread.forum_name.exists())
+      thread = Thread('DynamoDB', 'Using conditions')
 
-    # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
-    # even if the item ('S3', 'Using conditions') does.
-    thread.save(condition=Thread.subject.exists())
+      # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
+      # even if the item ('DynamoDB', 'Using update expressions') does.
+      thread.save(condition=Thread.forum_name.exists())
+
+      # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
+      # even if the item ('S3', 'Using conditions') does.
+      thread.save(condition=Thread.subject.exists())
+
+   .. code-tab:: python Async
+
+      thread = Thread('DynamoDB', 'Using conditions')
+
+      # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
+      # even if the item ('DynamoDB', 'Using update expressions') does.
+      await thread.save(condition=Thread.forum_name.exists())
+
+      # This will fail if the item ('DynamoDB', 'Using conditions') does not exist,
+      # even if the item ('S3', 'Using conditions') does.
+      await thread.save(condition=Thread.subject.exists())
 
 
 Conditional Model.save
@@ -117,15 +157,27 @@ Conditional Model.save
 
 This example saves a `Thread` item, only if the item exists.
 
-.. code-block:: python
+.. tabs::
 
-    thread_item = Thread('Existing Forum', 'Example Subject')
+   .. code-tab:: python Sync
 
-    # DynamoDB will only save the item if forum_name exists
-    print(thread_item.save(Thread.forum_name.exists())
+      thread_item = Thread('Existing Forum', 'Example Subject')
 
-    # You can specify multiple conditions
-    print(thread_item.save(Thread.forum_name.exists() & Thread.subject.contains('foobar')))
+      # DynamoDB will only save the item if forum_name exists
+      print(thread_item.save(Thread.forum_name.exists())
+
+      # You can specify multiple conditions
+      print(thread_item.save(Thread.forum_name.exists() & Thread.subject.contains('foobar')))
+
+   .. code-tab:: python Async
+
+      thread_item = Thread('Existing Forum', 'Example Subject')
+
+      # DynamoDB will only save the item if forum_name exists
+      print(await thread_item.save(Thread.forum_name.exists()))
+
+      # You can specify multiple conditions
+      print(await thread_item.save(Thread.forum_name.exists() & Thread.subject.contains('foobar')))
 
 
 Conditional Model.update
@@ -133,9 +185,15 @@ Conditional Model.update
 
 This example will update a `Thread` item, if the `views` attribute is less than 5 *OR* greater than 10:
 
-.. code-block:: python
+.. tabs::
 
-    thread_item.update(condition=(Thread.views < 5) | (Thread.views > 10))
+   .. code-tab:: python Sync
+
+      thread_item.update(condition=(Thread.views < 5) | (Thread.views > 10))
+
+   .. code-tab:: python Async
+
+      await thread_item.update(condition=(Thread.views < 5) | (Thread.views > 10))
 
 
 Conditional Model.delete
@@ -143,9 +201,15 @@ Conditional Model.delete
 
 This example will delete the item, only if its `views` attribute is equal to 0.
 
-.. code-block:: python
+.. tabs::
 
-    print(thread_item.delete(Thread.views == 0))
+   .. code-tab:: python Sync
+
+      print(thread_item.delete(Thread.views == 0))
+
+   .. code-tab:: python Async
+
+      print(await thread_item.delete(Thread.views == 0))
 
 
 Conditional Operation Failures
@@ -153,10 +217,20 @@ Conditional Operation Failures
 
 You can check for conditional operation failures by inspecting the cause of the raised exception:
 
-.. code-block:: python
+.. tabs::
 
-    try:
-        thread_item.save(Thread.forum_name.exists())
-    except PutError as e:
-        if e.cause_response_code = "ConditionalCheckFailedException":
-            raise ThreadDidNotExistError()
+   .. code-tab:: python Sync
+
+      try:
+          thread_item.save(Thread.forum_name.exists())
+      except PutError as e:
+          if e.cause_response_code = "ConditionalCheckFailedException":
+              raise ThreadDidNotExistError()
+
+   .. code-tab:: python Async
+
+      try:
+          await thread_item.save(Thread.forum_name.exists())
+      except PutError as e:
+          if e.cause_response_code = "ConditionalCheckFailedException":
+              raise ThreadDidNotExistError()
