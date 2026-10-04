@@ -30,6 +30,20 @@ from pynamodb.expressions.operand import Path, Value
 from pynamodb.expressions.update import SetAction
 from ..data import DESCRIBE_TABLE_DATA, GET_ITEM_DATA, LIST_TABLE_DATA
 
+
+class _FakeRaw:
+    """
+    Stand-in for the HTTP body object a canned response wraps.
+
+    aiobotocore < 3 takes the response headers from ``raw.raw_headers`` while
+    parsing a response, so a plain string fails there; newer aiobotocore and
+    botocore ignore it and use the response's ``headers`` instead.
+    """
+    def __init__(self, headers=None):
+        self.raw_headers = tuple(
+            (k.encode('utf-8'), v.encode('utf-8')) for k, v in (headers or {}).items()
+        )
+
 PATCH_METHOD = 'pynamodb.connection.Connection._make_api_call'
 TEST_TABLE_NAME = DESCRIBE_TABLE_DATA['Table']['TableName']
 REGION = 'us-east-1'
@@ -1371,7 +1385,7 @@ def test_connection__make_api_call__wraps_verbose_client_error_create(send_mock)
     response = AWSResponse(
         url='',
         status_code=500,
-        raw='',  # todo: use stream, like `botocore.tests.RawResponse`?
+        raw=_FakeRaw({'X-Amzn-RequestId': 'abcdef'}),  # todo: use stream, like `botocore.tests.RawResponse`?
         headers={'X-Amzn-RequestId': 'abcdef'},
     )
     response._content = json.dumps({
@@ -1395,7 +1409,7 @@ def test_connection__make_api_call__wraps_verbose_client_error_batch(send_mock):
     response = AWSResponse(
         url='',
         status_code=500,
-        raw='',  # todo: use stream, like `botocore.tests.RawResponse`?
+        raw=_FakeRaw({'X-Amzn-RequestId': 'abcdef'}),  # todo: use stream, like `botocore.tests.RawResponse`?
         headers={'X-Amzn-RequestId': 'abcdef'},
     )
     response._content = json.dumps({
@@ -1434,7 +1448,7 @@ def test_connection__make_api_call__wraps_verbose_client_error_transact(send_moc
     response = AWSResponse(
         url='',
         status_code=500,
-        raw='',  # todo: use stream, like `botocore.tests.RawResponse`?
+        raw=_FakeRaw({'X-Amzn-RequestId': 'abcdef'}),  # todo: use stream, like `botocore.tests.RawResponse`?
         headers={'X-Amzn-RequestId': 'abcdef'},
     )
     response._content = json.dumps({
@@ -1472,14 +1486,14 @@ def test_connection__make_api_call__wraps_verbose_client_error_transact(send_moc
 @mock.patch('botocore.httpsession.URLLib3Session.send')
 def test_connection__make_api_call_throws_verbose_error_after_backoff_later_succeeds(send_mock):
     # mock response
-    bad_response = AWSResponse(url='', status_code=500, headers={'x-amzn-RequestId': 'abcdef'}, raw='')
+    bad_response = AWSResponse(url='', status_code=500, headers={'x-amzn-RequestId': 'abcdef'}, raw=_FakeRaw({'x-amzn-RequestId': 'abcdef'}))
     bad_response._content = json.dumps({'message': 'There is a problem', '__type': 'InternalServerError'}).encode()
 
     good_response_content = {
         'TableDescription': {'TableName': 'table', 'TableStatus': 'Creating'},
         'ResponseMetadata': {'HTTPHeaders': {}, 'HTTPStatusCode': 200, 'RetryAttempts': 2},
     }
-    good_response = AWSResponse(url='', status_code=200, headers={}, raw='')
+    good_response = AWSResponse(url='', status_code=200, headers={}, raw=_FakeRaw())
     good_response._content = json.dumps(good_response_content).encode()
 
     send_mock.side_effect = [
@@ -1501,7 +1515,7 @@ def test_connection_make_api_call__retries_properly(send_mock):
         url='',
         status_code=200,
         headers={},
-        raw='',
+        raw=_FakeRaw(),
     )
     deserializable_response._content = json.dumps({'hello': 'world'}).encode('utf-8')
 
@@ -1509,7 +1523,7 @@ def test_connection_make_api_call__retries_properly(send_mock):
         url='',
         status_code=503,
         headers={},
-        raw='',
+        raw=_FakeRaw(),
     )
     bad_response._content = 'not_json'.encode('utf-8')
 
@@ -1536,7 +1550,7 @@ def test_connection__botocore_config():
 
 @freeze_time()
 def test_connection_make_api_call___extra_headers(mocker):
-    good_response = AWSResponse(url='', status_code=200, headers={}, raw='')
+    good_response = AWSResponse(url='', status_code=200, headers={}, raw=_FakeRaw())
     good_response._content = b'{}'
     send_mock = mocker.patch('botocore.httpsession.URLLib3Session.send', return_value=good_response)
 
@@ -1610,7 +1624,7 @@ def test_connection_make_api_call__binary_attributes(send_mock):
         }
     })
 
-    resp = AWSResponse(url='', status_code=200, headers={}, raw='')
+    resp = AWSResponse(url='', status_code=200, headers={}, raw=_FakeRaw())
     resp._content = resp_text.encode()
 
     send_mock.return_value = resp

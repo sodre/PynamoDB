@@ -12,6 +12,8 @@ import pynamodb.asyncio
 from pynamodb.asyncio import _compat
 from pynamodb.asyncio.connection import Connection
 
+from .test_base_connection import _FakeRaw
+
 
 async def test_same_settings_share_one_client():
     a, b = Connection(region='us-east-1'), Connection(region='us-east-1')
@@ -72,7 +74,7 @@ async def test_connections_context_closes_everything():
 
 
 def _ok_response():
-    response = AioAWSResponse(url='', status_code=200, headers={}, raw='')
+    response = AioAWSResponse(url='', status_code=200, headers={}, raw=_FakeRaw())
     response._content = json.dumps({'TableNames': []}).encode('utf-8')
     return response
 
