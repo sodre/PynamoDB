@@ -9,8 +9,10 @@ __author__ = 'Jharrod LaFon'
 __license__ = 'MIT'
 __version__ = '6.1.0'
 
+from typing import ContextManager
 
-def connections():
+
+def connections() -> 'ContextManager[None]':
     """
     Context manager that closes every open PynamoDB connection on exit.
     See also ``pynamodb.asyncio.connections`` for the async API.
