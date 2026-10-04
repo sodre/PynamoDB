@@ -3,6 +3,9 @@
 DynamoDB Models for PynamoDB
 """
 import random
+# Unused, but kept so `mock.patch('pynamodb.models.time.sleep')` in existing
+# user code still resolves on the generated sync module.
+import time  # noqa: F401
 import logging
 import warnings
 import sys

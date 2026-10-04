@@ -92,3 +92,18 @@ def test_sync_model_close():
     Thing._get_connection().connection.get_client()
     Thing.close()
     assert Thing._connection is None
+
+
+def test_sync_modules_keep_time_for_existing_patches():
+    # Existing users patch `pynamodb.models.time.sleep` / `pynamodb.pagination.time`;
+    # the modules must keep a `time` attribute and the patch must still take effect.
+    from unittest import mock
+    import pynamodb.models
+    import pynamodb.pagination
+    from pynamodb import _compat
+    import time
+    assert pynamodb.models.time is time
+    assert pynamodb.pagination.time is time
+    with mock.patch('pynamodb.models.time.sleep') as sleep:
+        _compat.sleep(2)
+    sleep.assert_called_once_with(2)

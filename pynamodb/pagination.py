@@ -1,4 +1,7 @@
 # AUTO-GENERATED from pynamodb/asyncio/pagination.py by scripts/unasync.py - DO NOT EDIT
+# Unused, but kept so `mock.patch('pynamodb.pagination.time')` in existing
+# user code still resolves on the generated sync module.
+import time  # noqa: F401
 from pynamodb import _compat
 from typing import Any, Callable, Dict, Iterable, Iterator, Optional, TypeVar
 

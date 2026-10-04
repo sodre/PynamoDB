@@ -1,3 +1,6 @@
+# Unused, but kept so `mock.patch('pynamodb.pagination.time')` in existing
+# user code still resolves on the generated sync module.
+import time  # noqa: F401
 from pynamodb.asyncio import _compat
 from typing import Any, Callable, Dict, Iterable, AsyncIterator, Optional, TypeVar
 
