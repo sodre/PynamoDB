@@ -73,8 +73,31 @@ class TestTransactGet:
             return_consumed_capacity=None
         )
 
+    def test_no_commit_when_block_raises(self, mocker):
+        connection = Connection()
+        connection.add_meta_table(MetaTable(MOCK_TABLE_DESCRIPTOR[TABLE_KEY]))
+        mock_connection_transact_get = mocker.patch.object(connection, 'transact_get_items')
+
+        with pytest.raises(ValueError):
+            with TransactGet(connection=connection) as t:
+                t.get(MockModel, 1, 2)
+                raise ValueError('abandon the transaction')
+
+        mock_connection_transact_get.assert_not_called()
+
 
 class TestTransactWrite:
+
+    def test_no_commit_when_block_raises(self, mocker):
+        connection = Connection()
+        mock_connection_transact_write = mocker.patch.object(connection, 'transact_write_items')
+
+        with pytest.raises(ValueError):
+            with TransactWrite(connection=connection) as t:
+                t.save(MockModel(3, 5))
+                raise ValueError('abandon the transaction')
+
+        mock_connection_transact_write.assert_not_called()
 
     def test_condition_check__no_condition(self):
         with pytest.raises(TypeError):
