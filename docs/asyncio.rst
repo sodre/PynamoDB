@@ -170,6 +170,10 @@ more; they are dropped the next time a client is opened. So close your clients (
 `Closing clients`_) before the loop ends, and prefer one long-lived event loop for the whole
 program.
 
+Use each model and :py:class:`~pynamodb.asyncio.connection.Connection` from one event loop at a
+time. Do not share them between threads that each run their own loop: every switch of loop
+replaces the client, and the bookkeeping behind shared clients is not thread-safe.
+
 Low-level connections
 ---------------------
 
