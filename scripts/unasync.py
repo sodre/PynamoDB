@@ -35,6 +35,14 @@ FILES: List[Tuple[str, str]] = [
     ("tests/asyncio/test_pagination.py", "tests/sync_generated/test_pagination.py"),
     ("tests/asyncio/test_model.py", "tests/sync_generated/test_model.py"),
     ("tests/asyncio/test_transaction.py", "tests/sync_generated/test_transaction.py"),
+    ("tests/asyncio/integration/__init__.py", "tests/sync_generated/integration/__init__.py"),
+    ("tests/asyncio/integration/conftest.py", "tests/sync_generated/integration/conftest.py"),
+    ("tests/asyncio/integration/base_integration_test.py", "tests/sync_generated/integration/base_integration_test.py"),
+    ("tests/asyncio/integration/binary_update_test.py", "tests/sync_generated/integration/binary_update_test.py"),
+    ("tests/asyncio/integration/model_integration_test.py", "tests/sync_generated/integration/model_integration_test.py"),
+    ("tests/asyncio/integration/table_integration_test.py", "tests/sync_generated/integration/table_integration_test.py"),
+    ("tests/asyncio/integration/test_discriminator_index.py", "tests/sync_generated/integration/test_discriminator_index.py"),
+    ("tests/asyncio/integration/test_transaction_integration.py", "tests/sync_generated/integration/test_transaction_integration.py"),
 ]
 
 HEADER = "# AUTO-GENERATED from {source} by scripts/unasync.py - DO NOT EDIT\n"
